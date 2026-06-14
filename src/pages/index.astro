@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../consts';
+---
+
+<BaseLayout>
+  <main>
+    <h1>{SITE.name}</h1>
+    <p>{SITE.description}</p>
+    <p>
+      Astro + Markdoc scaffold. Pages, design system, and content are ported in
+      later migration steps.
+    </p>
+  </main>
+</BaseLayout>
