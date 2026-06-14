@@ -1,0 +1,38 @@
+# Astro dev/build outputs
+dist
+.astro
+.output
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+.fleet
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Local pre-launch audit output (screenshots + crawl JSON) from scripts/audit-*.mjs
+.audit
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Synced from sibling SDK + spec repos by scripts/sync-docs.mjs on every dev/build.
+# The hand-authored homepage source stays in the repo.
+src/content/docs
+public/diagrams
+
+# Vercel
+.vercel
