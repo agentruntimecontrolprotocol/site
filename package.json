@@ -5,9 +5,10 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "pnpm sync:docs && astro dev",
+    "build": "pnpm sync:docs && astro build",
     "preview": "astro preview",
+    "sync:docs": "node scripts/sync-docs.mjs",
     "astro": "astro"
   },
   "dependencies": {
