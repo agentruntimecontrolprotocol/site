@@ -1,5 +1,10 @@
 ---
 import { SITE, BRAND_COLOR } from '../consts';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
+// Global design system + self-hosted fonts (loaded once for every route).
+import '../styles/fonts.css';
+import '../styles/main.css';
 
 interface Props {
   title?: string;
@@ -16,14 +21,40 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- No-FOUC theme: run before first paint, before any deferred JS. Read the
+         explicit choice from localStorage, else fall back to the OS preference,
+         and set `.light` / `.dark` EXPLICITLY so a stored choice wins over a
+         conflicting OS preference (mirrors the `:root:not(.light)` cascade). -->
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('arcp-theme');
+          const dark = stored
+            ? stored === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.add(dark ? 'dark' : 'light');
+        } catch {
+          /* storage blocked — fall through to the CSS media-query default */
+        }
+      })();
+    </script>
+
     <!-- Favicon wiring mirrored from www/nuxt.config.ts -> app.head.link -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color={BRAND_COLOR} />
+
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={new URL(Astro.url.pathname, SITE.url)} />
   </head>
   <body>
+    <header
+      class="relative z-10 flex items-center justify-between max-w-[42rem] mx-auto px-6 py-5"
+    >
+      <span class="font-mono text-ink font-medium">{SITE.name}</span>
+      <ThemeToggle />
+    </header>
     <slot />
   </body>
 </html>

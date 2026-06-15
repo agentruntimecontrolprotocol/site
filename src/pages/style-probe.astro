@@ -1,0 +1,50 @@
+---
+// Step 1 validation probe — renders every Section-5 component class so the
+// design-system port can be eyeballed in both themes and confirms no Tailwind
+// utility (notably text-muted) silently fails to resolve. Not a shipped page.
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Style probe">
+  <main class="relative z-10 max-w-[42rem] mx-auto px-6 pb-24 spec-prose home-prose">
+    <p class="eyebrow">Eyebrow</p>
+    <p class="label">Label · text-muted</p>
+    <h2 class="section-marker">Section marker</h2>
+    <h3 class="section-title">Section title · text-muted</h3>
+
+    <p>
+      Body copy in Newsreader serif with an <strong>emphasised</strong> run and a
+      <span class="term">term</span> token. Here is an
+      <a href="#">inline link</a> too.
+    </p>
+
+    <p>
+      <span class="chip">chip</span>
+      <a class="lang-chip" href="#">lang-chip</a>
+      <a class="lang-chip is-active" href="#">lang-chip active</a>
+    </p>
+
+    <p>
+      <a class="btn-arrow" href="#">Arrow CTA →</a>
+    </p>
+
+    <div class="envelope my-6">
+      <span class="envelope__tag">envelope</span>
+      <p class="m-0">Bordered envelope container.</p>
+    </div>
+
+    <div class="envelope--dashed p-4 my-6">Dashed envelope.</div>
+
+    <hr class="rule my-6" />
+
+    <div class="code-window my-6">
+      <div class="code-window__bar">
+        <span>code-window</span>
+        <span class="code-window__dots"><i></i><i></i><i></i></span>
+      </div>
+      <pre><span class="tok-key">"status"</span><span class="tok-punc">:</span> <span class="tok-str">"running"</span></pre>
+    </div>
+
+    <p>Brand caret<span class="arcp-caret"></span></p>
+  </main>
+</BaseLayout>

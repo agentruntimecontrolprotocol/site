@@ -4,12 +4,13 @@ import { SITE } from '../consts';
 ---
 
 <BaseLayout>
-  <main>
-    <h1>{SITE.name}</h1>
+  <main class="relative z-10 max-w-[42rem] mx-auto px-6 pb-24 spec-prose home-prose">
+    <p class="eyebrow">Agent Runtime Control Protocol</p>
+    <h1 class="font-mono text-ink font-medium text-3xl mb-4">{SITE.name}</h1>
     <p>{SITE.description}</p>
     <p>
-      Astro + Markdoc scaffold. Pages, design system, and content are ported in
-      later migration steps.
+      Astro + Markdoc rebuild. The Inkwell design system is ported; pages and
+      content land in later migration steps.
     </p>
   </main>
 </BaseLayout>

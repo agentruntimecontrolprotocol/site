@@ -1,0 +1,390 @@
+/* ============================================================================
+   INKWELL — editorial-technical theme for Astro + Markdoc / Tailwind v4
+   Paper + ink, monospace signal, single vermilion accent.
+
+   Source of truth for design tokens, base styles, and component classes.
+   Light is default; the theme toggle sets `.light` / `.dark` on <html>.
+
+   Ported verbatim from www (Nuxt 4); the only deltas are the removal of
+   Nuxt UI Pro's hooks (the `@nuxt/ui-pro` import, the `--ui-*` remap, and the
+   Nuxt-UI-shaped code-block wrapper selector). Token values are unchanged.
+   ============================================================================ */
+
+@import "tailwindcss";
+
+/* The migration spec quotes old Nuxt-UI class names (e.g. `bg-(--ui-bg-elevated)`);
+   it isn't site markup, so keep Tailwind from generating dead utilities for it. */
+@source not "../../docs";
+
+/* ----------------------------------------------------------------------------
+   1. Static palettes — vermilion (primary) + inkwell (neutral).
+   ---------------------------------------------------------------------------- */
+@theme static {
+  --color-vermilion-50:  #fdf2ec;
+  --color-vermilion-100: #fcdfd0;
+  --color-vermilion-200: #f8c1a3;
+  --color-vermilion-300: #f29c70;
+  --color-vermilion-400: #e87749;
+  --color-vermilion-500: #d65628;
+  --color-vermilion-600: #c2431c;
+  --color-vermilion-700: #9f3416;
+  --color-vermilion-800: #7d2911;
+  --color-vermilion-900: #5e1f0d;
+  --color-vermilion-950: #391108;
+
+  --color-inkwell-50:  #fbf8f1;
+  --color-inkwell-100: #f5f1e8;
+  --color-inkwell-200: #e8e1d3;
+  --color-inkwell-300: #ddd5c5;
+  --color-inkwell-400: #9a9385;
+  --color-inkwell-500: #756e62;
+  --color-inkwell-600: #5a5448;
+  --color-inkwell-700: #3c372f;
+  --color-inkwell-800: #2a2620;
+  --color-inkwell-900: #1b1815;
+  --color-inkwell-950: #110f0c;
+
+  /* type families — now self-hosted via Fontsource (@fontsource/ibm-plex-mono +
+     @fontsource-variable/newsreader); family names are unchanged. */
+  --font-mono:  "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+
+  /* additive mono / chrome scale */
+  --text-micro: 0.66rem;
+  --text-mini:  0.72rem;
+  --text-small: 0.80rem;
+  --text-code:  0.82rem;
+
+  /* tracking */
+  --tracking-display:    -0.018em;
+  --tracking-mono:        0.06em;
+  --tracking-mono-wide:   0.14em;
+  --tracking-label:       0.18em;
+  --tracking-marker:      0.20em;
+
+  /* radius */
+  --radius-chip: 0.25rem;
+
+  /* motion */
+  --animate-blink: blink 1.15s steps(1) infinite;
+  --animate-rise:  rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes rise  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ----------------------------------------------------------------------------
+   2. Inkwell semantic tokens — runtime-swappable per scheme.
+      `--arcp-*` aliases exist for components that predate the rename.
+   ---------------------------------------------------------------------------- */
+@layer base {
+  :root, .light {
+    --bg:         var(--color-inkwell-100);
+    --paper:      var(--color-inkwell-50);
+    --ink:        var(--color-inkwell-900);
+    --ink-soft:   var(--color-inkwell-700);
+    /* inkwell-600 (#5a5448 ≈ 6.8:1 on paper) — inkwell-500 fell just under AA (4.47:1) */
+    --muted:      var(--color-inkwell-600);
+    /* #6a6357 ≈ 5.27:1 on --bg — inkwell-500 (#756e62) was 4.47:1 (AA fail) */
+    --faint:      #6a6357;
+    --line:       var(--color-inkwell-300);
+    --line-soft:  var(--color-inkwell-200);
+    --accent:     var(--color-vermilion-600);
+    /* #8b5a2b ≈ 5.18:1 on --bg — #a8794d was 3.38:1 (AA fail for text) */
+    --accent-dim: #8b5a2b;
+    --code-bg:    #fcfaf4;
+    --str:        #4f6b3a;
+    --key:        #9a4a1f;
+  }
+
+  /* system pref — kicks in before color-mode hydrates, and on no-JS.
+     `:not(.light)` lets an explicit light selection still win on a dark OS. */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --bg:         var(--color-inkwell-950);
+      --paper:      #1b1813;
+      --ink:        #ece6da;
+      --ink-soft:   #c9c2b4;
+      --muted:      #8c8576;
+      /* #8a8374 ≈ 5.08:1 on --bg — #5f5949 was 2.74:1 (AA fail) */
+      --faint:      #8a8374;
+      --line:       #2b2820;
+      --line-soft:  #221f19;
+      --accent:     #f0612f;
+      --accent-dim: #c79968;
+      --code-bg:    #1a1813;
+      --str:        #9bbd76;
+      --key:        #e08a4c;
+    }
+  }
+
+  /* manual override — wins over system pref (set by the theme toggle). */
+  .dark {
+    --bg:         var(--color-inkwell-950);
+    --paper:      #1b1813;
+    --ink:        #ece6da;
+    --ink-soft:   #c9c2b4;
+    --muted:      #8c8576;
+    --faint:      #8a8374;
+    --line:       #2b2820;
+    --line-soft:  #221f19;
+    --accent:     #f0612f;
+    --accent-dim: #c79968;
+    --code-bg:    #1a1813;
+    --str:        #9bbd76;
+    --key:        #e08a4c;
+  }
+
+  /* backward-compat aliases for existing components */
+  :root, .light, .dark {
+    --arcp-paper:      var(--bg);
+    --arcp-paper-soft: var(--paper);
+    --arcp-ink:        var(--ink);
+    --arcp-ink-soft:   var(--ink-soft);
+    --arcp-line:       var(--line);
+    --arcp-line-soft:  var(--line-soft);
+    --arcp-accent:     var(--accent);
+    --arcp-accent-dim: var(--accent-dim);
+    --arcp-code-bg:    var(--code-bg);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   (Removed) Nuxt UI semantic-token remap (`--ui-*` → Inkwell). It only existed
+   to repaint `<U…>` Nuxt UI Pro components, none of which exist in Astro.
+   ---------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+   3. Bridge Inkwell semantic tokens into Tailwind utilities.
+      Emits utilities like `bg-paper`, `text-ink`, `border-line`, etc.
+      `inline` resolves through the live CSS vars (no rebuild on scheme swap).
+
+      `--color-muted` was previously omitted because Nuxt UI Pro owned
+      text-muted / bg-muted / border-muted. With Nuxt UI gone it must be mapped
+      here or the component classes below (.label, .eyebrow, .section-title,
+      .code-window__bar use `text-muted`) would silently fail to resolve.
+   ---------------------------------------------------------------------------- */
+@theme inline {
+  --color-bg:         var(--bg);
+  --color-paper:      var(--paper);
+  --color-ink:        var(--ink);
+  --color-ink-soft:   var(--ink-soft);
+  --color-muted:      var(--muted);
+  --color-faint:      var(--faint);
+  --color-line:       var(--line);
+  --color-line-soft:  var(--line-soft);
+  --color-accent:     var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-code-bg:    var(--code-bg);
+  --color-str:        var(--str);
+  --color-key:        var(--key);
+}
+
+/* ----------------------------------------------------------------------------
+   4. Base — document defaults, paper grain, selection, reduced motion.
+   ---------------------------------------------------------------------------- */
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    -webkit-font-smoothing: antialiased;
+    font-size: 18px;
+    line-height: 1.62;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* faint dotted grain for paper texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: radial-gradient(var(--line-soft) 0.5px, transparent 0.5px);
+    background-size: 22px 22px;
+    opacity: 0.35;
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  /* visible keyboard focus — nav links, the language select, buttons, and any
+     focusable element. Mouse clicks don't trigger :focus-visible. */
+  a:focus-visible,
+  button:focus-visible,
+  select:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .arcp-caret { animation: none !important; }
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   5. Components — recurring spec-sheet patterns, reusable.
+   ---------------------------------------------------------------------------- */
+@layer components {
+
+  /* — labels & section chrome — */
+  .label {
+    @apply font-mono text-mini tracking-label uppercase text-muted font-medium;
+  }
+  .eyebrow {
+    @apply font-mono text-mini tracking-label uppercase text-accent font-medium;
+  }
+  .section-marker {
+    @apply font-mono text-small tracking-[0.1em] text-accent pt-2 border-t-2 border-accent;
+  }
+  .section-title {
+    @apply font-mono text-small tracking-marker uppercase text-muted font-medium pt-2;
+  }
+
+  /* — inline & block code — */
+  .term {
+    @apply font-mono text-ink bg-paper border border-line rounded-[3px] px-[0.34em] py-[0.05em];
+    font-size: 0.9em;
+  }
+  .code-window {
+    @apply bg-code-bg border border-line rounded-lg overflow-hidden;
+  }
+  .code-window__bar {
+    @apply flex items-center justify-between px-4 py-[0.6rem] border-b border-line
+           font-mono text-micro tracking-mono-wide uppercase text-muted;
+  }
+  .code-window__dots { @apply flex gap-[0.4rem]; }
+  .code-window__dots > i { @apply block w-[0.6rem] h-[0.6rem] rounded-full bg-line not-italic; }
+  .code-window pre {
+    @apply m-0 px-5 py-[1.15rem] overflow-x-auto font-mono text-code text-ink-soft;
+    line-height: 1.72;
+  }
+  /* syntax helpers */
+  .tok-key  { @apply text-key; }
+  .tok-str  { @apply text-str; }
+  .tok-punc { @apply text-faint; }
+
+  /* — chips — */
+  .chip {
+    @apply inline-flex items-center font-mono text-mini text-ink-soft
+           border border-line rounded-chip bg-code-bg px-[0.55rem] py-[0.28rem];
+  }
+
+  /* — bordered "envelope" container — */
+  .envelope {
+    @apply relative border border-ink-soft rounded-lg bg-paper p-[1.1rem];
+  }
+  .envelope__tag {
+    @apply absolute -top-[0.72rem] left-4 bg-bg px-[0.55rem]
+           font-mono text-micro tracking-mono-wide uppercase text-accent;
+  }
+  .envelope--dashed {
+    @apply border border-dashed border-accent-dim rounded-md bg-transparent;
+  }
+
+  /* — hairline divider — */
+  .rule { @apply border-0 border-t border-line; }
+
+  /* — arrow link / quiet CTA — */
+  .btn-arrow {
+    @apply inline-flex items-center gap-[0.6rem] font-mono text-ink no-underline
+           border-b-[1.5px] border-accent pb-[0.2rem] transition-all;
+    font-size: 0.92rem;
+  }
+  .btn-arrow:hover { @apply gap-[0.95rem] text-accent; }
+  .btn-arrow:active { @apply gap-[0.75rem]; }
+
+  /* Language chips in the docs sidebar. */
+  .lang-chip {
+    @apply inline-flex items-center rounded-chip border border-line bg-code-bg px-2 py-1
+           font-mono text-small text-ink-soft no-underline transition-colors;
+  }
+  .lang-chip:hover { @apply border-accent text-accent; }
+  .lang-chip.is-active {
+    @apply border-accent bg-paper text-accent font-medium;
+  }
+
+  /* — spec body copy — */
+  .spec-prose { @apply max-w-[42rem]; }
+  .spec-prose p { @apply mb-5 text-ink-soft; }
+  .spec-prose p:last-child { @apply mb-0; }
+  /* Markdoc renders `**bold**` as <strong>; serif at 700 reads too heavy (heavier
+     than the h1). Lighten home emphasis to medium, the intended weight. */
+  .home-prose :is(b, strong) { @apply text-ink font-medium; }
+  .spec-prose a {
+    @apply text-ink no-underline border-b border-accent-dim transition-colors;
+  }
+  .spec-prose a:hover { @apply border-accent; }
+
+  /* — scroll reveal (toggle .is-in via IntersectionObserver) — */
+  .reveal {
+    @apply opacity-0 translate-y-[18px];
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .reveal.is-in { @apply opacity-100 translate-y-0; }
+
+  /* Scroll-reveal failsafe — if IO never runs, content still appears. */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal:not(.is-in) {
+      animation: reveal-fallback 0.01ms 4s forwards;
+    }
+  }
+  @keyframes reveal-fallback {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* — brand-mark blinking caret — */
+  .arcp-caret {
+    display: inline-block;
+    width: 0.5em;
+    height: 1.05em;
+    background: var(--accent);
+    margin-left: 0.28em;
+    transform: translateY(0.12em);
+    animation: var(--animate-blink);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   6. Docs prose code panel — UNLAYERED so it wins over Shiki/Markdoc defaults.
+      Lighter paper panel + hairline border, matching the home code-window.
+   ---------------------------------------------------------------------------- */
+.prose pre {
+  background-color: var(--code-bg);
+  border-color: var(--line);
+  /* Re-derived from www's `.prose div.relative.group:has(> pre)` (a Nuxt UI Pro
+     wrapper). @astrojs/markdoc + Shiki emit a bare <pre>, so apply the ~0.75rem
+     block margin directly to it. */
+  margin-block: 0.75rem;
+}
+
+/* #12 — diagrams ship light + dark SVGs; show the variant matching the site
+   theme class (the source <picture> only followed the OS prefers-color-scheme,
+   so it ignored the in-app theme toggle). */
+.diagram-dark { display: none; }
+.dark .diagram-light { display: none; }
+.dark .diagram-dark { display: revert; }
+
+.prose thead:not(:has(th:not(:empty))) {
+  display: none;
+}
+.prose thead:not(:has(th:not(:empty))) + tbody tr:first-child td {
+  border-top-width: 0;
+}
+
+/* Docs table row spacing + hover affordance. */
+.prose tbody tr {
+  transition: background-color 0.15s ease;
+}
+.prose tbody tr:hover {
+  background-color: color-mix(in srgb, var(--paper) 55%, transparent);
+}

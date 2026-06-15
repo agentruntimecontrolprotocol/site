@@ -1,0 +1,42 @@
+---
+// Minimal header theme toggle. Flips `.light` / `.dark` on <html> and persists
+// the choice to localStorage under the same key the no-FOUC script reads
+// (see BaseLayout). Step 6 reuses this in the real header.
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  class="chip"
+  aria-label="Toggle color theme"
+  title="Toggle color theme"
+>
+  <span class="sun" aria-hidden="true">☼</span>
+  <span class="moon" aria-hidden="true">☾</span>
+</button>
+
+<style>
+  /* Show the glyph for the theme you'd switch TO. */
+  #theme-toggle .moon { display: none; }
+  :global(.dark) #theme-toggle .sun { display: none; }
+  :global(.dark) #theme-toggle .moon { display: inline; }
+</style>
+
+<script>
+  const KEY = 'arcp-theme';
+  const root = document.documentElement;
+
+  function apply(theme: 'light' | 'dark') {
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    try {
+      localStorage.setItem(KEY, theme);
+    } catch {
+      /* private mode / storage disabled — toggle still works for this page */
+    }
+  }
+
+  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    apply(root.classList.contains('dark') ? 'light' : 'dark');
+  });
+</script>
