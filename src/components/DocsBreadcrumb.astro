@@ -1,0 +1,60 @@
+---
+import { LANG_LABELS } from '../lib/docs-nav';
+
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+
+function formatSegment(segment: string) {
+  if (segment.startsWith('@')) return segment;
+  if (/^[a-f0-9]{40}$/i.test(segment)) return segment.slice(0, 7);
+  return segment.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const segments = path.split('/').filter(Boolean);
+type Crumb = { label: string; to: string; current?: boolean };
+let crumbs: Crumb[] = [];
+
+if (segments.length > 1) {
+  const lang = segments[0]!;
+  crumbs = [{ label: LANG_LABELS[lang] ?? lang, to: `/${lang}` }];
+  let acc = `/${lang}`;
+  for (let i = 1; i < segments.length; i++) {
+    const segment = segments[i]!;
+    acc += `/${segment}`;
+    crumbs.push({ label: formatSegment(segment), to: acc, current: i === segments.length - 1 });
+  }
+}
+---
+
+{
+  crumbs.length > 1 && (
+    <nav aria-label="Breadcrumb" class="mb-6 font-mono text-small text-muted">
+      <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1 m-0 p-0 list-none">
+        {crumbs.map((crumb, index) => (
+          <li class="inline-flex items-center gap-1.5">
+            {index > 0 && (
+              <span aria-hidden="true" class="text-line">
+                /
+              </span>
+            )}
+            {!crumb.current ? (
+              <a
+                href={crumb.to}
+                class="rounded px-0.5 text-muted no-underline transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                {crumb.label}
+              </a>
+            ) : (
+              <span aria-current="page" class="text-ink-soft">
+                {crumb.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}

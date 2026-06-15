@@ -12,6 +12,11 @@
 
 @import "tailwindcss";
 
+/* Tailwind Typography powers the docs `.prose` body (heading scale, lists,
+   tables). www got this base from Nuxt UI Pro; the Section 7 `.prose` overrides
+   below sit on top of it. Themed to Inkwell tokens in src/styles/prose.css. */
+@plugin "@tailwindcss/typography";
+
 /* The migration spec quotes old Nuxt-UI class names (e.g. `bg-(--ui-bg-elevated)`);
    it isn't site markup, so keep Tailwind from generating dead utilities for it. */
 @source not "../../docs";

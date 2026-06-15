@@ -14,7 +14,16 @@ const linkSchema = z.object({
 // No required frontmatter: titles come from each file's first `# H1`. `title`
 // is optional so unmigrated files still validate if Step 4 injects one.
 const docs = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdoc}', base: './src/content/docs' }),
+  // Custom `generateId` preserves the file path verbatim (only stripping the
+  // extension + trailing `/index`). Astro's default slugs each segment through
+  // github-slugger, which would mangle exact URLs (e.g. `draft-arcp-1.1` →
+  // `draft-arcp-11`) and 404 the thousands of synced internal links.
+  loader: glob({
+    pattern: '**/*.{md,mdoc}',
+    base: './src/content/docs',
+    generateId: ({ entry }) =>
+      entry.replace(/\.(md|mdoc)$/i, '').replace(/\/index$/i, '').replace(/^index$/i, ''),
+  }),
   schema: z.object({
     title: z.string().optional(),
   }),

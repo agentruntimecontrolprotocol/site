@@ -1,0 +1,133 @@
+---
+import { LANG_ITEMS, type NavItem } from '../lib/docs-nav';
+
+interface Props {
+  langNav: NavItem[];
+  currentLang: string;
+  path: string;
+}
+
+const { langNav, currentLang, path } = Astro.props;
+
+function isActive(p: string, exact = false) {
+  return exact ? path === p : path === p || path.startsWith(p + '/');
+}
+// Open on the active trail by default; client script handles manual toggles.
+const isOpen = (p: string) => isActive(p);
+
+const parentBase = 'flex-1 min-w-0 block px-3 py-2 text-[0.9375rem] rounded truncate transition-colors min-h-8';
+const parentLinkClass = (p: string) =>
+  isActive(p)
+    ? `${parentBase} bg-paper text-accent font-medium`
+    : `${parentBase} text-ink hover:bg-paper hover:text-ink`;
+
+const childBase = 'block px-3 py-1.5 text-[0.9375rem] rounded transition-colors min-h-8';
+const childLinkClass = (p: string) =>
+  isActive(p, true)
+    ? `${childBase} bg-paper text-accent font-medium`
+    : `${childBase} text-muted hover:bg-paper hover:text-ink`;
+---
+
+<aside
+  id="docs-nav"
+  class="fixed lg:sticky top-14 left-0 z-30 w-72 shrink-0 h-[calc(100dvh-3.5rem)] lg:h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-line bg-bg transition-transform duration-200 -translate-x-full lg:translate-x-0"
+>
+  <div class="px-4 py-4 border-b border-line">
+    <p class="mb-2 text-xs uppercase tracking-wider text-muted">Language</p>
+
+    <div class="hidden lg:flex flex-wrap gap-1.5">
+      {
+        LANG_ITEMS.map((item) => (
+          <a
+            href={`/${item.value}`}
+            rel="nofollow noreferrer"
+            class:list={['lang-chip', { 'is-active': currentLang === item.value }]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </div>
+
+    <select
+      id="lang-select"
+      class="w-full lg:hidden rounded border border-line bg-paper px-2 py-1.5 font-mono text-small text-ink"
+      aria-label="Select language"
+    >
+      {
+        LANG_ITEMS.map((item) => (
+          <option value={item.value} selected={currentLang === item.value}>
+            {item.label}
+          </option>
+        ))
+      }
+    </select>
+  </div>
+
+  <nav id="docs-nav-tree" class="px-3 py-4">
+    <ul class="space-y-0.5">
+      {
+        langNav.map((item) => (
+          <li>
+            <div class="flex items-center gap-0.5">
+              <a
+                href={item.path}
+                class={parentLinkClass(item.path)}
+                data-active={isActive(item.path) ? 'true' : undefined}
+                aria-current={isActive(item.path) ? 'page' : undefined}
+              >
+                {item.title}
+              </a>
+              {item.children?.length ? (
+                <button
+                  type="button"
+                  class="nav-toggle shrink-0 inline-flex size-8 items-center justify-center rounded text-muted transition-colors hover:bg-paper hover:text-ink"
+                  data-target={item.path}
+                  aria-expanded={isOpen(item.path) ? 'true' : 'false'}
+                  aria-label={`Toggle ${item.title}`}
+                >
+                  <svg
+                    class:list={['nav-chevron transition-transform duration-150', { 'rotate-90': isOpen(item.path) }]}
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+            {item.children?.length ? (
+              <ul
+                class:list={[
+                  'nav-children ml-3 mt-0.5 mb-1 space-y-0.5 border-l border-line pl-3',
+                  { hidden: !isOpen(item.path) },
+                ]}
+                data-group={item.path}
+              >
+                {item.children.map((child) => (
+                  <li>
+                    <a
+                      href={child.path}
+                      class={childLinkClass(child.path)}
+                      data-active={isActive(child.path, true) ? 'true' : undefined}
+                      aria-current={isActive(child.path, true) ? 'page' : undefined}
+                    >
+                      {child.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</aside>

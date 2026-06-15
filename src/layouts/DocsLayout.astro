@@ -1,0 +1,101 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import DocsSidebar from '../components/DocsSidebar.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import { SITE } from '../consts';
+import type { NavItem } from '../lib/docs-nav';
+
+interface Props {
+  path: string;
+  langNav: NavItem[];
+  currentLang: string;
+  title?: string;
+  description?: string;
+}
+
+const { path, langNav, currentLang, title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <header
+    slot="header"
+    class="sticky top-0 z-50 h-14 border-b border-line bg-bg/85 backdrop-blur"
+  >
+    <div class="flex h-14 items-center justify-between gap-4 px-[1.4rem] md:px-8">
+      <div class="flex min-w-0 items-center gap-3">
+        <button
+          id="docs-menu-btn"
+          type="button"
+          class="-ml-1 inline-flex size-9 items-center justify-center rounded text-muted hover:text-ink lg:hidden"
+          aria-label="Toggle navigation"
+          aria-controls="docs-nav"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </button>
+        <a href="/" class="inline-flex items-center font-mono text-[1.02rem] font-semibold tracking-[0.04em] text-ink no-underline">
+          {SITE.name}<span class="arcp-caret"></span>
+        </a>
+      </div>
+      <ThemeToggle />
+    </div>
+  </header>
+
+  <div class="min-h-screen bg-bg text-ink">
+    <div class="lg:flex">
+      <div
+        id="docs-overlay"
+        class="hidden fixed inset-0 top-14 z-20 bg-black/40 lg:hidden"
+        aria-hidden="true"
+      >
+      </div>
+
+      <DocsSidebar langNav={langNav} currentLang={currentLang} path={path} />
+
+      <main class="flex-1 min-w-0 px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
+        <slot />
+      </main>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Mobile drawer
+  const aside = document.getElementById('docs-nav');
+  const overlay = document.getElementById('docs-overlay');
+  const menuBtn = document.getElementById('docs-menu-btn');
+
+  function setDrawer(open: boolean) {
+    aside?.classList.toggle('-translate-x-full', !open);
+    overlay?.classList.toggle('hidden', !open);
+  }
+  menuBtn?.addEventListener('click', () =>
+    setDrawer(aside?.classList.contains('-translate-x-full') ?? false),
+  );
+  overlay?.addEventListener('click', () => setDrawer(false));
+
+  // Collapsible nav groups (manual toggle on top of the active-trail default)
+  document.querySelectorAll<HTMLButtonElement>('.nav-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      if (!target) return;
+      const group = document.querySelector(`.nav-children[data-group="${CSS.escape(target)}"]`);
+      const chevron = btn.querySelector('.nav-chevron');
+      if (!group) return;
+      group.classList.toggle('hidden');
+      const open = !group.classList.contains('hidden');
+      btn.setAttribute('aria-expanded', String(open));
+      chevron?.classList.toggle('rotate-90', open);
+    });
+  });
+
+  // Mobile language switch
+  document.getElementById('lang-select')?.addEventListener('change', (e) => {
+    const value = (e.target as HTMLSelectElement).value;
+    if (value) window.location.href = '/' + value;
+  });
+
+  // Keep the active sidebar row in view on deep pages
+  document
+    .querySelector('#docs-nav [data-active="true"]')
+    ?.scrollIntoView({ block: 'nearest' });
+</script>

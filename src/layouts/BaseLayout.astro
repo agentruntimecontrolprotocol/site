@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ThemeToggle.astro';
 // Global design system + self-hosted fonts (loaded once for every route).
 import '../styles/fonts.css';
 import '../styles/main.css';
+import '../styles/prose.css';
 import '../styles/shiki.css';
 
 interface Props {
@@ -50,12 +51,14 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
     <link rel="canonical" href={new URL(Astro.url.pathname, SITE.url)} />
   </head>
   <body>
-    <header
-      class="relative z-10 flex items-center justify-between max-w-[42rem] mx-auto px-6 py-5"
-    >
-      <span class="font-mono text-ink font-medium">{SITE.name}</span>
-      <ThemeToggle />
-    </header>
+    <slot name="header">
+      <header
+        class="relative z-10 flex items-center justify-between max-w-[42rem] mx-auto px-6 py-5"
+      >
+        <span class="font-mono text-ink font-medium">{SITE.name}</span>
+        <ThemeToggle />
+      </header>
+    </slot>
     <slot />
   </body>
 </html>
