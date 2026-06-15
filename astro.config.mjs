@@ -6,6 +6,14 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 import { SITE } from './src/consts';
+import { arcpLight, arcpDark } from './shiki-arcp.mjs';
+
+// Canonical 17-lang list + brand Shiki themes, mirrored from www/nuxt.config.ts.
+const SHIKI_LANGS = [
+  'json', 'bash', 'typescript', 'javascript', 'python', 'rust', 'go',
+  'yaml', 'toml', 'http', 'csharp', 'fsharp', 'java', 'kotlin', 'php',
+  'ruby', 'swift',
+];
 
 // https://astro.build/config
 //
@@ -20,6 +28,21 @@ export default defineConfig({
   site: SITE.url,
   output: 'static',
   integrations: [markdoc(), sitemap()],
+  // The synced SDK docs are plain machine-generated GFM (.md), rendered by
+  // Astro's built-in markdown (lenient — passes raw HTML through, so the
+  // <picture>-derived diagram <img>s and inline <br>/<sub>/<a> render, and bare
+  // generics like `Foo<Bar>` don't break the build). Markdoc (.mdoc) is too
+  // strict for that machine-generated content, so docs use markdown; Markdoc
+  // stays wired for any hand-authored .mdoc. Both paths share the brand Shiki
+  // themes (here for .md; markdoc.config.mjs for .mdoc), class-swapped by
+  // src/styles/shiki.css.
+  markdown: {
+    shikiConfig: {
+      themes: { light: arcpLight, dark: arcpDark },
+      langs: SHIKI_LANGS,
+      wrap: false,
+    },
+  },
   vite: {
     plugins: [tailwindcss()],
   },
