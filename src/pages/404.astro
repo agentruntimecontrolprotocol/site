@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppHeader from '../components/AppHeader.astro';
+---
+
+<BaseLayout title="404 — Page not found">
+  <AppHeader slot="header" />
+
+  <main class="flex min-h-[calc(100vh-3.5rem)] items-center bg-bg text-ink relative z-[1]">
+    <div class="max-w-[64rem] w-full mx-auto px-[1.4rem] md:px-8 py-24">
+      <div class="eyebrow mb-[1.4rem]">Error 404</div>
+      <h1 class="font-serif font-medium leading-[1.05] tracking-display mb-[1.4rem] text-[clamp(2.2rem,5vw,3.6rem)]">
+        Page not found
+      </h1>
+      <p class="text-ink-soft text-[1.1rem] leading-[1.5] max-w-[34rem] mb-[2.2rem]">
+        That page doesn&rsquo;t exist. It may have moved, or the URL may be miscased &mdash;
+        documentation paths are all lowercase.
+      </p>
+      <div class="flex flex-wrap gap-x-8 gap-y-4 items-center">
+        <a href="/" rel="nofollow noreferrer" class="btn-arrow">
+          Back home <span class="text-accent">&rarr;</span>
+        </a>
+        <a href="/spec/draft-arcp-1.1" class="btn-arrow">
+          Read the specification <span class="text-accent">&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,31 @@
+---
+import { renderInline } from '../lib/home-render';
+
+interface Props {
+  items: Array<{ index?: string; description?: string }>;
+}
+const { items } = Astro.props;
+---
+
+<div class="reveal md:ml-28 max-w-[42rem] divide-y divide-line-soft">
+  {
+    items.map((item) => (
+      <div class="grid grid-cols-[2.4rem_1fr] gap-[1.1rem] py-[1.05rem] items-start">
+        <div class="font-mono text-small text-faint pt-[0.18rem]">{item.index}</div>
+        <div class="text-[1rem] text-ink-soft leading-[1.5] arcp-step" set:html={renderInline(item.description ?? '')} />
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .arcp-step :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    color: var(--ink);
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.04em 0.32em;
+  }
+</style>

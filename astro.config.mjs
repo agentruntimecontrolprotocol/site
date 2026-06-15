@@ -8,13 +8,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { SITE } from './src/consts';
 import { arcpLight, arcpDark } from './shiki-arcp.mjs';
 
-// Canonical 17-lang list + brand Shiki themes, mirrored from www/nuxt.config.ts.
-const SHIKI_LANGS = [
-  'json', 'bash', 'typescript', 'javascript', 'python', 'rust', 'go',
-  'yaml', 'toml', 'http', 'csharp', 'fsharp', 'java', 'kotlin', 'php',
-  'ruby', 'swift',
-];
-
 // https://astro.build/config
 //
 // `site` is the canonical origin, mirrored verbatim from the existing Nuxt site
@@ -37,9 +30,10 @@ export default defineConfig({
   // themes (here for .md; markdoc.config.mjs for .mdoc), class-swapped by
   // src/styles/shiki.css.
   markdown: {
+    // Bundled languages (json, typescript, http, …) are auto-loaded on demand by
+    // Astro's Shiki, so only the brand themes need configuring here.
     shikiConfig: {
       themes: { light: arcpLight, dark: arcpDark },
-      langs: SHIKI_LANGS,
       wrap: false,
     },
   },

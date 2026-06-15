@@ -2,33 +2,41 @@
 import { faSun, faMoon } from '@fortawesome/pro-light-svg-icons';
 import Icon from './Icon.astro';
 
-// Minimal header theme toggle. Flips `.light` / `.dark` on <html> and persists
-// the choice to localStorage under the same key the no-FOUC script reads
-// (see BaseLayout). Step 6 reuses this in the real header. Icons are FontAwesome
-// Pro (pro-light), matching www's FA setup.
+// Header theme toggle. Flips `.light` / `.dark` on <html> and persists to
+// localStorage under the key the no-FOUC script reads (see BaseLayout). Mirrors
+// www's AppHeader toggle: sun shown in dark (→ switch to light), moon in light.
+// Icons are FontAwesome Pro (pro-light), per the project's FA decision.
 ---
 
 <button
   type="button"
   id="theme-toggle"
-  class="chip"
-  aria-label="Toggle color theme"
-  title="Toggle color theme"
+  class="ml-1 inline-flex size-8 items-center justify-center rounded text-muted transition-colors hover:bg-paper hover:text-ink active:scale-95"
+  aria-label="Switch theme"
 >
   <Icon icon={faSun} class="sun" />
   <Icon icon={faMoon} class="moon" />
 </button>
 
 <style>
-  /* Show the glyph for the theme you'd switch TO. */
-  #theme-toggle :global(.moon) { display: none; }
-  :global(.dark) #theme-toggle :global(.sun) { display: none; }
-  :global(.dark) #theme-toggle :global(.moon) { display: inline-block; }
+  /* Show the icon for the state you'd switch TO: moon in light, sun in dark. */
+  #theme-toggle :global(.sun) { display: none; }
+  :global(.dark) #theme-toggle :global(.sun) { display: inline-block; }
+  :global(.dark) #theme-toggle :global(.moon) { display: none; }
 </style>
 
 <script>
   const KEY = 'arcp-theme';
   const root = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+
+  function syncLabel() {
+    btn?.setAttribute(
+      'aria-label',
+      root.classList.contains('dark') ? 'Switch to light theme' : 'Switch to dark theme',
+    );
+  }
+  syncLabel();
 
   function apply(theme: 'light' | 'dark') {
     root.classList.remove('light', 'dark');
@@ -38,9 +46,10 @@ import Icon from './Icon.astro';
     } catch {
       /* private mode / storage disabled — toggle still works for this page */
     }
+    syncLabel();
   }
 
-  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+  btn?.addEventListener('click', () => {
     apply(root.classList.contains('dark') ? 'light' : 'dark');
   });
 </script>

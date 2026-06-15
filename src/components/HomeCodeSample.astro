@@ -1,0 +1,26 @@
+---
+import { highlightCode } from '../lib/home-render';
+
+interface Props {
+  code: { title: string; lang: string; caption?: string; source: string };
+}
+const { code } = Astro.props;
+const highlighted = await highlightCode(code.source, code.lang);
+---
+
+<figure class="reveal mt-[2.4rem] md:ml-28 max-w-[40rem] m-0">
+  <div class="code-window">
+    <div class="code-window__bar">
+      <span>{code.title}</span>
+      <span class="code-window__dots"><i></i><i></i><i></i></span>
+    </div>
+    <div class="arcp-code" set:html={highlighted} />
+  </div>
+  {
+    code.caption && (
+      <figcaption class="mt-[0.9rem] max-w-[40rem] text-[0.92rem] text-muted italic">
+        {code.caption}
+      </figcaption>
+    )
+  }
+</figure>

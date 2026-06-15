@@ -1,0 +1,31 @@
+---
+interface Props {
+  diagram: {
+    outer: { label: string; tags: string[] };
+    inner: { label: string; tags: string[] };
+    aside: string;
+  };
+}
+const { diagram } = Astro.props;
+---
+
+<div class="reveal mt-[2.6rem] mb-2 md:ml-28 max-w-[40rem]">
+  <div class="envelope pb-[1.3rem]">
+    <span class="envelope__tag">{diagram.outer.label}</span>
+    <div class="flex flex-wrap gap-2 mb-4">
+      {diagram.outer.tags.map((tag) => <span class="chip">{tag}</span>)}
+    </div>
+    <div class="envelope--dashed p-[0.9rem]">
+      <span class="block font-mono text-micro tracking-[0.12em] uppercase text-accent-dim mb-[0.7rem]">
+        {diagram.inner.label}
+      </span>
+      <div class="flex flex-wrap gap-2">
+        {diagram.inner.tags.map((tag) => <span class="chip">{tag}</span>)}
+      </div>
+    </div>
+  </div>
+  <div class="mt-[0.85rem] font-mono text-mini text-muted flex items-center gap-[0.55rem]">
+    <span class="text-accent">└─▶</span>
+    <span>{diagram.aside}</span>
+  </div>
+</div>

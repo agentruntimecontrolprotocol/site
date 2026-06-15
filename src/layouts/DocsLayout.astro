@@ -1,8 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import DocsSidebar from '../components/DocsSidebar.astro';
-import ThemeToggle from '../components/ThemeToggle.astro';
-import { SITE } from '../consts';
+import AppHeader from '../components/AppHeader.astro';
 import type { NavItem } from '../lib/docs-nav';
 
 interface Props {
@@ -17,28 +16,7 @@ const { path, langNav, currentLang, title, description } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
-  <header
-    slot="header"
-    class="sticky top-0 z-50 h-14 border-b border-line bg-bg/85 backdrop-blur"
-  >
-    <div class="flex h-14 items-center justify-between gap-4 px-[1.4rem] md:px-8">
-      <div class="flex min-w-0 items-center gap-3">
-        <button
-          id="docs-menu-btn"
-          type="button"
-          class="-ml-1 inline-flex size-9 items-center justify-center rounded text-muted hover:text-ink lg:hidden"
-          aria-label="Toggle navigation"
-          aria-controls="docs-nav"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-        </button>
-        <a href="/" class="inline-flex items-center font-mono text-[1.02rem] font-semibold tracking-[0.04em] text-ink no-underline">
-          {SITE.name}<span class="arcp-caret"></span>
-        </a>
-      </div>
-      <ThemeToggle />
-    </div>
-  </header>
+  <AppHeader slot="header" showMenu />
 
   <div class="min-h-screen bg-bg text-ink">
     <div class="lg:flex">
@@ -59,16 +37,15 @@ const { path, langNav, currentLang, title, description } = Astro.props;
 </BaseLayout>
 
 <script>
-  // Mobile drawer
+  // Mobile drawer — the hamburger lives in AppHeader and fires `toggle-nav`.
   const aside = document.getElementById('docs-nav');
   const overlay = document.getElementById('docs-overlay');
-  const menuBtn = document.getElementById('docs-menu-btn');
 
   function setDrawer(open: boolean) {
     aside?.classList.toggle('-translate-x-full', !open);
     overlay?.classList.toggle('hidden', !open);
   }
-  menuBtn?.addEventListener('click', () =>
+  document.addEventListener('toggle-nav', () =>
     setDrawer(aside?.classList.contains('-translate-x-full') ?? false),
   );
   overlay?.addEventListener('click', () => setDrawer(false));

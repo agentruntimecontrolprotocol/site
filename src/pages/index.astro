@@ -1,16 +1,114 @@
 ---
+import { getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE } from '../consts';
+import AppHeader from '../components/AppHeader.astro';
+import HomeDiagram from '../components/HomeDiagram.astro';
+import HomeConcernsGrid from '../components/HomeConcernsGrid.astro';
+import HomeSteps from '../components/HomeSteps.astro';
+import HomeScopeColumns from '../components/HomeScopeColumns.astro';
+import HomeCodeSample from '../components/HomeCodeSample.astro';
+import { renderInline, renderBlock } from '../lib/home-render';
+
+const entry = await getEntry('home', 'home');
+if (!entry) throw new Error('Home content missing (src/content/home.json)');
+const home = entry.data;
 ---
 
-<BaseLayout>
-  <main class="relative z-10 max-w-[42rem] mx-auto px-6 pb-24 spec-prose home-prose">
-    <p class="eyebrow">Agent Runtime Control Protocol</p>
-    <h1 class="font-mono text-ink font-medium text-3xl mb-4">{SITE.name}</h1>
-    <p>{SITE.description}</p>
-    <p>
-      Astro + Markdoc rebuild. The Inkwell design system is ported; pages and
-      content land in later migration steps.
-    </p>
-  </main>
+<BaseLayout title={home.seo.title} description={home.seo.description}>
+  <AppHeader slot="header" tags={home.header.tags} />
+
+  <div class="home-prose relative z-[1]">
+    <main>
+      {/* hero */}
+      <div class="border-b border-line">
+        <div class="max-w-[64rem] mx-auto px-[1.4rem] md:px-8 pt-16 pb-14 md:pt-[6.5rem] md:pb-[4.5rem]">
+          <div class="reveal-load animate-rise [animation-delay:0.05s] eyebrow mb-[1.6rem]">
+            {home.hero.eyebrow}
+          </div>
+          <h1 class="reveal-load animate-rise [animation-delay:0.16s] font-serif font-medium leading-[1.04] tracking-display max-w-[18ch] mb-[1.7rem] text-[clamp(2.4rem,5.8vw,4.1rem)]">
+            {home.hero.headline}
+          </h1>
+          <p
+            class="reveal-load animate-rise [animation-delay:0.27s] text-[clamp(1.15rem,2.2vw,1.42rem)] leading-[1.5] text-ink-soft max-w-[36rem] font-normal"
+            set:html={renderInline(home.hero.lede)}
+          />
+        </div>
+      </div>
+
+      {/* numbered sections */}
+      {
+        home.sections.map((section) => (
+          <section id={section.id} class="border-b border-line">
+            <div class="max-w-[64rem] mx-auto px-[1.4rem] md:px-8 py-[4.5rem]">
+              <div class="reveal grid grid-cols-1 md:grid-cols-[5.5rem_1fr] gap-[0.6rem] md:gap-6 items-start mb-[1.8rem] md:mb-[2.4rem]">
+                <div class="section-marker">{section.number}</div>
+                <h2 class="section-title m-0">{section.kicker}</h2>
+              </div>
+
+              {section.body && (
+                <div class="reveal spec-prose md:ml-28" set:html={renderBlock(section.body)} />
+              )}
+
+              {section.diagram && <HomeDiagram diagram={section.diagram} />}
+              {section.kind === 'grid' && section.items && <HomeConcernsGrid items={section.items} />}
+              {section.kind === 'list' && section.items && <HomeSteps items={section.items} />}
+              {section.kind === 'list' && section.code && <HomeCodeSample code={section.code} />}
+              {section.kind === 'columns' && section.columns && <HomeScopeColumns columns={section.columns} />}
+            </div>
+          </section>
+        ))
+      }
+    </main>
+
+    {/* footer */}
+    <footer>
+      <div class="max-w-[64rem] mx-auto px-[1.4rem] md:px-8 flex flex-col md:flex-row md:flex-wrap gap-8 items-start md:items-end justify-between py-14 md:pb-[4.5rem]">
+        <a href={home.cta.to} class="btn-arrow">
+          {home.cta.label} <span class="text-accent">→</span>
+        </a>
+        <div class="font-mono text-mini leading-[1.9] text-muted text-left md:text-right">
+          <p>{home.footer.line1}</p>
+          <p>{home.footer.line2}</p>
+          <p>
+            <a
+              href={home.footer.contact.href}
+              class="text-ink-soft no-underline border-b border-line hover:text-accent hover:border-accent"
+            >
+              {home.footer.contact.label}
+            </a>
+          </p>
+        </div>
+      </div>
+    </footer>
+  </div>
 </BaseLayout>
+
+<script>
+  // Scroll-reveal: toggle `.is-in` as `.reveal` blocks enter view. Ported from
+  // www's index.vue onMounted (IntersectionObserver + reduced-motion + failsafe).
+  function revealAll() {
+    document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in'));
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+    revealAll();
+  } else {
+    try {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+      );
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+      window.setTimeout(revealAll, 4000); // failsafe if IO never fires
+    } catch {
+      revealAll();
+    }
+  }
+</script>

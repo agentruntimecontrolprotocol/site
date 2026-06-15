@@ -1,0 +1,90 @@
+---
+import { SITE } from '../consts';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  /** spec-document tags shown on the home header (Internet-Draft / …) */
+  tags?: string[];
+  /** show the hamburger that toggles the docs sidebar drawer (mobile) */
+  showMenu?: boolean;
+}
+
+const { tags, showMenu = false } = Astro.props;
+
+const NAV = [
+  { label: 'Docs', to: '/python' },
+  { label: 'Spec', to: '/spec/draft-arcp-1.1' },
+];
+const GITHUB = 'https://github.com/agentruntimecontrolprotocol';
+
+const path = Astro.url.pathname;
+const isActive = (to: string) => path === to || path.startsWith(to + '/');
+const linkBase =
+  'rounded px-2.5 py-1.5 transition-colors hover:text-accent active:text-accent';
+---
+
+<header class="sticky top-0 z-50 border-b border-line bg-bg/85 backdrop-blur">
+  <div class="mx-auto flex h-14 max-w-[80rem] items-center justify-between gap-4 px-[1.4rem] md:px-8">
+    <div class="flex min-w-0 items-center gap-3">
+      {
+        showMenu && (
+          <button
+            id="docs-menu-btn"
+            type="button"
+            class="-ml-1 inline-flex size-9 items-center justify-center rounded text-muted hover:text-ink lg:hidden"
+            aria-label="Toggle navigation"
+            aria-controls="docs-nav"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+          </button>
+        )
+      }
+      <a
+        href="/"
+        rel="nofollow noreferrer"
+        class="inline-flex items-center font-mono text-[1.02rem] font-semibold tracking-[0.04em] text-ink no-underline"
+      >
+        {SITE.name}<span class="arcp-caret"></span>
+      </a>
+      {
+        tags?.length ? (
+          <div class="ml-3 hidden items-center gap-2 font-mono text-mini text-muted md:flex">
+            {tags.map((t, i) => (
+              <>
+                <span class="whitespace-nowrap">{t}</span>
+                {i < tags.length - 1 && <span class="text-line">/</span>}
+              </>
+            ))}
+          </div>
+        ) : null
+      }
+    </div>
+
+    <nav class="flex items-center gap-1 font-mono text-small sm:gap-2">
+      {
+        NAV.map((l) => (
+          <a
+            href={l.to}
+            class:list={[linkBase, isActive(l.to) ? 'text-accent' : 'text-ink-soft']}
+          >
+            {l.label}
+          </a>
+        ))
+      }
+      <a href={GITHUB} target="_blank" rel="noopener" class:list={[linkBase, 'text-ink-soft']}>GitHub</a>
+      <ThemeToggle />
+    </nav>
+  </div>
+</header>
+
+{
+  showMenu && (
+    <script is:inline>
+      // The hamburger lives in the header; the drawer lives in DocsLayout. Bridge
+      // them with a DOM event the layout listens for.
+      document.getElementById('docs-menu-btn')?.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('toggle-nav'));
+      });
+    </script>
+  )
+}
