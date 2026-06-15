@@ -1,7 +1,11 @@
 ---
+import { faSun, faMoon } from '@fortawesome/pro-light-svg-icons';
+import Icon from './Icon.astro';
+
 // Minimal header theme toggle. Flips `.light` / `.dark` on <html> and persists
 // the choice to localStorage under the same key the no-FOUC script reads
-// (see BaseLayout). Step 6 reuses this in the real header.
+// (see BaseLayout). Step 6 reuses this in the real header. Icons are FontAwesome
+// Pro (pro-light), matching www's FA setup.
 ---
 
 <button
@@ -11,15 +15,15 @@
   aria-label="Toggle color theme"
   title="Toggle color theme"
 >
-  <span class="sun" aria-hidden="true">☼</span>
-  <span class="moon" aria-hidden="true">☾</span>
+  <Icon icon={faSun} class="sun" />
+  <Icon icon={faMoon} class="moon" />
 </button>
 
 <style>
   /* Show the glyph for the theme you'd switch TO. */
-  #theme-toggle .moon { display: none; }
-  :global(.dark) #theme-toggle .sun { display: none; }
-  :global(.dark) #theme-toggle .moon { display: inline; }
+  #theme-toggle :global(.moon) { display: none; }
+  :global(.dark) #theme-toggle :global(.sun) { display: none; }
+  :global(.dark) #theme-toggle :global(.moon) { display: inline-block; }
 </style>
 
 <script>

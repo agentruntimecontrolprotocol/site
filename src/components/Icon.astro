@@ -1,0 +1,28 @@
+---
+import { icon, type IconDefinition } from '@fortawesome/fontawesome-svg-core';
+// FA core stylesheet (svg-inline--fa sizing/baseline). www loaded this in its
+// plugin with autoAddCss=false; here we render the SVG at build time, so the
+// static CSS is what positions it. Astro dedupes this import across pages.
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+interface Props {
+  /** A FontAwesome icon definition, e.g. `faSun` from @fortawesome/pro-light-svg-icons. */
+  icon: IconDefinition;
+  /** Extra classes merged onto the generated <svg>. */
+  class?: string;
+  /** Accessible title; when omitted the icon is aria-hidden (decorative). */
+  title?: string;
+}
+
+const { icon: iconDef, class: className, title } = Astro.props;
+
+const rendered = icon(iconDef, {
+  classes: className ? className.split(/\s+/).filter(Boolean) : [],
+  title,
+  attributes: title ? {} : { 'aria-hidden': 'true', focusable: 'false' },
+});
+
+const html = rendered ? rendered.html.join('') : '';
+---
+
+<Fragment set:html={html} />
