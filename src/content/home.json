@@ -1,0 +1,31 @@
+{
+  "home": {
+    "seo": {
+      "title": "ARCP — Agent Runtime Control Protocol",
+      "description": "A transport-agnostic wire protocol for submitting, observing, and controlling long-running AI agent jobs."
+    },
+    "header": {
+      "name": "ARCP",
+      "tags": ["Internet-Draft", "v1.1"]
+    },
+    "hero": {
+      "eyebrow": "Agent Runtime Control Protocol",
+      "headline": "Submit, observe, and control long-running agent jobs.",
+      "lede": "A transport-agnostic wire protocol for **durable** agent execution."
+    },
+    "sections": [],
+    "cta": {
+      "label": "Read the spec",
+      "to": "/spec/draft-arcp-1.1"
+    },
+    "footer": {
+      "line1": "Agent Runtime Control Protocol",
+      "line2": "An open specification.",
+      "contact": {
+        "label": "GitHub",
+        "href": "https://github.com/agentruntimecontrolprotocol",
+        "external": true
+      }
+    }
+  }
+}

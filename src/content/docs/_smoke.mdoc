@@ -1,0 +1,23 @@
+# Smoke Test Heading
+
+A paragraph with `inline code` and a [link](https://example.com).
+
+> A blockquote — used in 764 synced docs, so it must render.
+
+| Field    | Type   | Required |
+| -------- | ------ | -------- |
+| `job_id` | string | yes      |
+| `status` | enum   | yes      |
+
+```typescript
+interface Job {
+  id: string;
+  status: "queued" | "running" | "done";
+  attempts: number; // retry counter
+}
+```
+
+```http
+GET /v1/jobs/123 HTTP/1.1
+Host: api.example.com
+```

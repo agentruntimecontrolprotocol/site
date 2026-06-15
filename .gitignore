@@ -31,8 +31,15 @@ yarn-error.log*
 
 # Synced from sibling SDK + spec repos by scripts/sync-docs.mjs on every dev/build.
 # The hand-authored homepage source stays in the repo.
-src/content/docs
+# `_smoke.mdoc` is a committed Step 2 fixture that keeps the Markdoc/Shiki
+# pipeline exercised by the build before docs-sync (Step 4) lands; remove it
+# (and src/pages/smoke.astro) once real docs route via Step 3.
+src/content/docs/*
+!src/content/docs/_smoke.mdoc
 public/diagrams
+
+# Playwright MCP scratch output (snapshots, console logs)
+.playwright-mcp
 
 # Vercel
 .vercel
