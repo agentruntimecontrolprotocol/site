@@ -1,0 +1,81 @@
+---
+// DocsNavbar.astro — the 56px bar at the top of the docs right region.
+//
+// Replaces AppHeader inside the docs shell. At `wide:` it is pinned by flow
+// (the content pane scrolls beneath it, so no `position:fixed`/blur needed);
+// below `wide:` it is `sticky top-0` while the body scrolls. The wordmark only
+// shows below `wide:` — at desktop the brand lives in the sidebar's top zone
+// (which is off-canvas in the mobile drawer, hence the navbar carries it there).
+//
+// AppHeader is untouched and still serves the marketing home page.
+import { SITE } from '../consts';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  /** current SDK-language slice (reserved for the navbar context slot) */
+  currentLang?: string;
+  /** current pathname, for active-state on the Docs/Spec links */
+  path?: string;
+}
+
+const { path = Astro.url.pathname } = Astro.props;
+
+const NAV = [
+  { label: 'Docs', to: '/docs' },
+  { label: 'Spec', to: '/spec/draft-arcp-1.1' },
+];
+const GITHUB = 'https://github.com/agentruntimecontrolprotocol';
+
+const isActive = (to: string) => path === to || path.startsWith(to + '/');
+const linkBase =
+  'rounded px-2.5 py-1.5 transition-colors hover:text-accent active:text-accent';
+---
+
+<header
+  class="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4
+         border-b border-line bg-bg px-4 sm:px-6 wide:static"
+>
+  <div class="flex min-w-0 items-center gap-2">
+    <button
+      id="docs-menu-btn"
+      type="button"
+      class="-ml-1 inline-flex size-9 items-center justify-center rounded text-muted hover:text-ink wide:hidden"
+      aria-label="Toggle navigation"
+      aria-controls="docs-nav"
+      aria-expanded="false"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+    </button>
+
+    <!-- brand shows below wide:; at desktop it lives in the sidebar top zone -->
+    <a
+      href="/"
+      class="inline-flex items-center font-mono text-[1.02rem] font-semibold tracking-[0.04em] text-ink no-underline wide:hidden"
+    >
+      {SITE.name}<span class="arcp-caret"></span>
+    </a>
+  </div>
+
+  <nav class="flex items-center gap-1 font-mono text-small sm:gap-2">
+    {
+      NAV.map((l) => (
+        <a
+          href={l.to}
+          class:list={[linkBase, isActive(l.to) ? 'text-accent' : 'text-ink-soft']}
+        >
+          {l.label}
+        </a>
+      ))
+    }
+    <a href={GITHUB} target="_blank" rel="noopener" class:list={[linkBase, 'text-ink-soft']}>GitHub</a>
+    <ThemeToggle />
+  </nav>
+</header>
+
+<script is:inline>
+  // The hamburger lives here; the drawer + listener live in DocsLayout. Bridge
+  // them with a DOM event (same contract AppHeader used).
+  document.getElementById('docs-menu-btn')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('toggle-nav'));
+  });
+</script>

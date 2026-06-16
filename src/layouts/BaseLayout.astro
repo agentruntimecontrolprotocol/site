@@ -18,7 +18,7 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
 ---
 
 <!doctype html>
-<html lang={SITE.defaultLocale}>
+<html lang={SITE.defaultLocale} data-code-lang="spec">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -40,6 +40,18 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
           /* storage blocked — fall through to the CSS media-query default */
         }
       })();
+    </script>
+
+    <!-- No-FOUC code-language view: rewrite `data-code-lang` from the stored
+         preference before first paint so curated code panels show the reader's
+         chosen SDK with no flash. SSR default is `spec` (the wire/curl view). -->
+    <script is:inline>
+      try {
+        const v = localStorage.getItem('arcp:code-lang');
+        if (v) document.documentElement.dataset.codeLang = v;
+      } catch {
+        /* storage blocked — keep the SSR `spec` default */
+      }
     </script>
 
     <!-- Favicon wiring mirrored from www/nuxt.config.ts -> app.head.link -->

@@ -1,0 +1,143 @@
+---
+// Phase-2 validation probe — exercises ArcpSection (2-col grid), CodePanel
+// (sticky --code-bg panel), LangTabs (global view toggle), CodeVariant, and
+// ResponseBlock inside the real AppShell so the per-section sticky + content-
+// pane scroll behave as on a docs page. Not a shipped page.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppShell from '../components/AppShell.astro';
+import ArcpSection from '../components/ArcpSection.astro';
+import CodePanel from '../components/code/CodePanel.astro';
+import CodeVariant from '../components/code/CodeVariant.astro';
+import ResponseBlock from '../components/code/ResponseBlock.astro';
+
+const DEMO_LANGS = ['spec', 'python', 'typescript', 'go', 'rust'];
+
+const createSession = {
+  spec: `curl -X POST https://rpc.example.com/arcp \\
+  -H "Authorization: Bearer $ARCP_TOKEN" \\
+  -d '{ "type": "session.create", "agent": "researcher" }'`,
+  python: `import arcp
+
+client = arcp.Client(token=ARCP_TOKEN)
+session = client.sessions.create(agent="researcher")
+print(session.id, session.state)`,
+  typescript: `import { ArcpClient } from "arcp";
+
+const client = new ArcpClient({ token: ARCP_TOKEN });
+const session = await client.sessions.create({ agent: "researcher" });
+console.log(session.id, session.state);`,
+  go: `client := arcp.NewClient(arcp.WithToken(token))
+session, err := client.Sessions.Create(ctx, arcp.SessionCreate{
+    Agent: "researcher",
+})
+if err != nil { log.Fatal(err) }`,
+  rust: `let client = ArcpClient::new(token);
+let session = client
+    .sessions()
+    .create(SessionCreate { agent: "researcher".into() })
+    .await?;`,
+};
+
+const createResponse = `{
+  "type": "session.created",
+  "session": { "id": "ses_8f2a", "state": "ready", "agent": "researcher" }
+}`;
+
+const subscribe = {
+  spec: `curl -N https://rpc.example.com/arcp/sessions/ses_8f2a/events \\
+  -H "Authorization: Bearer $ARCP_TOKEN"`,
+  python: `for event in client.sessions.subscribe("ses_8f2a"):
+    print(event.seq, event.type)`,
+  typescript: `for await (const event of client.sessions.subscribe("ses_8f2a")) {
+  console.log(event.seq, event.type);
+}`,
+  go: `stream, _ := client.Sessions.Subscribe(ctx, "ses_8f2a")
+for stream.Next() {
+    e := stream.Event()
+    fmt.Println(e.Seq, e.Type)
+}`,
+  rust: `let mut stream = client.sessions().subscribe("ses_8f2a").await?;
+while let Some(event) = stream.next().await {
+    println!("{} {}", event.seq, event.type);
+}`,
+};
+
+// ARCP streaming = resumable sequenced Event frames (seq), NOT list pagination.
+const eventFrame = `{
+  "type": "event",
+  "seq": 7,
+  "event": { "type": "task.progress", "ratio": 0.42 }
+}`;
+
+const filler = Array.from({ length: 5 });
+---
+
+<BaseLayout title="Code probe">
+  <Fragment slot="header" />
+
+  <AppShell>
+    <div slot="sidebar" class="h-full border-r border-line p-4 font-mono text-small text-muted">
+      sidebar placeholder
+    </div>
+    <div slot="navbar" class="flex h-14 items-center border-b border-line px-4 font-mono text-small text-muted">
+      code-probe · navbar placeholder
+    </div>
+
+    <div class="mx-auto max-w-[64rem] px-5 py-8 sm:px-8 wide:px-12 wide:py-10">
+      <h1 class="font-serif text-[2rem] mb-2">Code panel probe</h1>
+      <p class="text-ink-soft mb-10">
+        Two <code class="term">ArcpSection</code> blocks with sticky code panels and a
+        shared language view toggle. Switch the language in either panel — both follow.
+      </p>
+
+      <ArcpSection id="create">
+        <h2 class="font-serif text-[1.5rem] mb-3">Create a session</h2>
+        <p class="text-ink-soft mb-4">
+          Open an ARCP session for an agent. The handshake returns a session id and its
+          initial lifecycle <code class="term">state</code>.
+        </p>
+        {filler.map(() => (
+          <p class="text-ink-soft mb-4">
+            Filler prose so the left column is taller than the sticky panel — this is what
+            lets each section's code panel stick while you scroll, then hand off to the next.
+          </p>
+        ))}
+
+        <CodePanel slot="aside" signature="client.sessions.create()" anchor="create" langs={DEMO_LANGS}>
+          <Fragment slot="request">
+            {DEMO_LANGS.map((l) => (
+              <CodeVariant lang={l} code={createSession[l as keyof typeof createSession]} />
+            ))}
+          </Fragment>
+          <ResponseBlock slot="response" json={createResponse} />
+        </CodePanel>
+      </ArcpSection>
+
+      <hr class="rule my-12" />
+
+      <ArcpSection id="subscribe">
+        <h2 class="font-serif text-[1.5rem] mb-3">Subscribe to events</h2>
+        <p class="text-ink-soft mb-4">
+          Stream resumable, sequenced <code class="term">Event</code> frames for a session.
+          Each frame carries a monotonic <code class="term">seq</code>; resume after a drop
+          with <code class="term">last_seq</code>.
+        </p>
+        {filler.map(() => (
+          <p class="text-ink-soft mb-4">
+            More filler prose to give this section enough height to demonstrate the sticky
+            hand-off between adjacent section panels.
+          </p>
+        ))}
+
+        <CodePanel slot="aside" signature="client.sessions.subscribe()" anchor="subscribe" langs={DEMO_LANGS}>
+          <Fragment slot="request">
+            {DEMO_LANGS.map((l) => (
+              <CodeVariant lang={l} code={subscribe[l as keyof typeof subscribe]} />
+            ))}
+          </Fragment>
+          <ResponseBlock slot="response" json={eventFrame} label="Event" />
+        </CodePanel>
+      </ArcpSection>
+    </div>
+  </AppShell>
+</BaseLayout>

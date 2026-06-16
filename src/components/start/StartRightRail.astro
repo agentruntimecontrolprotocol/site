@@ -1,0 +1,68 @@
+---
+// StartRightRail.astro — the start-page "start kit" (Stripe's BASE URL +
+// CLIENT LIBRARIES rail, re-mapped to ARCP): a callout, a per-language
+// Quickstart (install + connect, tracking the global code-lang toggle), and the
+// CLIENT LIBRARIES list. The library chips are NAVIGATION (links to /<lang>),
+// distinct from the in-panel view toggle.
+import { QUICKSTART, START_LANGS } from '../../lib/start-content';
+import { LANG_ITEMS } from '../../lib/docs-nav';
+import StartCallout from './StartCallout.astro';
+import CodeVariant from '../code/CodeVariant.astro';
+---
+
+<div class="space-y-4">
+  <StartCallout tag="New to ARCP?" href="/spec/draft-arcp-1.1" linkLabel="Read the spec">
+    Start with the protocol overview — what the envelope is, how sessions and
+    leases work — then come back to wire it up.
+  </StartCallout>
+
+  <StartCallout tag="Just integrating?" href="#connect" linkLabel="Jump to connect">
+    Already know ARCP? Skip ahead to the handshake and your first job.
+  </StartCallout>
+
+  <!-- QUICKSTART — the ARCP analog of Stripe's "BASE URL". Per-language; tracks
+       the global data-code-lang so it switches with the panels below. -->
+  <div class="CodePanel">
+    <div class="CodePanel-Header">
+      <span class="font-mono text-mini tracking-label uppercase font-medium" style="color: var(--faint)">Quickstart</span>
+    </div>
+    <div class="px-4 py-3 space-y-3">
+      <div>
+        {
+          START_LANGS.map((l) => (
+            <div class="code-variant" data-lang={l}>
+              <code class="block font-mono text-code text-ink-soft">{QUICKSTART[l].install}</code>
+            </div>
+          ))
+        }
+      </div>
+      {START_LANGS.map((l) => <CodeVariant lang={l} code={QUICKSTART[l].connect} />)}
+      <div>
+        {
+          START_LANGS.map((l) => (
+            <div class="code-variant" data-lang={l}>
+              <p class="m-0 font-mono text-mini text-faint">Requires {QUICKSTART[l].runtime}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENT LIBRARIES — navigation into each SDK's full docs. -->
+  <div class="envelope">
+    <span class="envelope__tag">Client libraries</span>
+    <div class="flex flex-wrap gap-1.5">
+      {
+        LANG_ITEMS.filter((l) => l.value !== 'spec').map((l) => (
+          <a href={`/${l.value}`} rel="nofollow noreferrer" class="lang-chip">
+            {l.label}
+          </a>
+        ))
+      }
+    </div>
+    <a href="/spec/draft-arcp-1.1" class="btn-arrow mt-3 text-small">
+      Spec / wire-format view <span class="text-accent">→</span>
+    </a>
+  </div>
+</div>

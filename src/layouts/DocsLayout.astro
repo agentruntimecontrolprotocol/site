@@ -1,56 +1,64 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import AppShell from '../components/AppShell.astro';
 import DocsSidebar from '../components/DocsSidebar.astro';
-import AppHeader from '../components/AppHeader.astro';
-import type { NavItem } from '../lib/docs-nav';
+import DocsNavbar from '../components/DocsNavbar.astro';
+import type { NavSection } from '../lib/docs-nav';
 
 interface Props {
   path: string;
-  langNav: NavItem[];
+  navSections: NavSection[];
   currentLang: string;
   title?: string;
   description?: string;
 }
 
-const { path, langNav, currentLang, title, description } = Astro.props;
+const { path, navSections, currentLang, title, description } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
-  <AppHeader slot="header" showMenu />
+  {/* suppress BaseLayout's fallback header — the navbar lives inside the shell */}
+  <Fragment slot="header" />
 
-  <div class="min-h-screen bg-bg text-ink">
-    <div class="lg:flex">
-      <div
-        id="docs-overlay"
-        class="hidden fixed inset-0 top-14 z-20 bg-black/40 lg:hidden"
-        aria-hidden="true"
-      >
-      </div>
+  <AppShell>
+    <DocsSidebar slot="sidebar" navSections={navSections} currentLang={currentLang} path={path} />
+    <DocsNavbar slot="navbar" currentLang={currentLang} path={path} />
 
-      <DocsSidebar langNav={langNav} currentLang={currentLang} path={path} />
+    <slot />
+  </AppShell>
 
-      <main class="flex-1 min-w-0 px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
-        <slot />
-      </main>
-    </div>
+  {/* mobile drawer scrim — only below wide:, where the sidebar is off-canvas */}
+  <div
+    id="docs-overlay"
+    class="hidden fixed inset-0 z-30 bg-black/40 wide:hidden"
+    aria-hidden="true"
+  >
   </div>
 </BaseLayout>
 
 <script>
-  // Mobile drawer — the hamburger lives in AppHeader and fires `toggle-nav`.
+  // ── Mobile drawer ────────────────────────────────────────────────────────
+  // The hamburger lives in DocsNavbar and fires `toggle-nav`; the drawer + scrim
+  // live here. Below `wide:` the sidebar is a fixed off-canvas drawer.
   const aside = document.getElementById('docs-nav');
   const overlay = document.getElementById('docs-overlay');
+  const menuBtn = document.getElementById('docs-menu-btn');
 
   function setDrawer(open: boolean) {
     aside?.classList.toggle('-translate-x-full', !open);
     overlay?.classList.toggle('hidden', !open);
+    document.documentElement.classList.toggle('drawer-open', open);
+    menuBtn?.setAttribute('aria-expanded', String(open));
   }
   document.addEventListener('toggle-nav', () =>
     setDrawer(aside?.classList.contains('-translate-x-full') ?? false),
   );
   overlay?.addEventListener('click', () => setDrawer(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setDrawer(false);
+  });
 
-  // Collapsible nav groups (manual toggle on top of the active-trail default)
+  // ── Collapsible nav groups (manual toggle atop the active-trail default) ──
   document.querySelectorAll<HTMLButtonElement>('.nav-toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
@@ -65,14 +73,30 @@ const { path, langNav, currentLang, title, description } = Astro.props;
     });
   });
 
-  // Mobile language switch
+  // ── Mobile language switch (the <select> fallback below wide:) ───────────
   document.getElementById('lang-select')?.addEventListener('change', (e) => {
     const value = (e.target as HTMLSelectElement).value;
     if (value) window.location.href = '/' + value;
   });
 
-  // Keep the active sidebar row in view on deep pages
+  // ── Keep the active row in view — scoped to the inner nav-tree scroller ──
   document
-    .querySelector('#docs-nav [data-active="true"]')
+    .querySelector('#docs-nav-tree [data-active="true"]')
     ?.scrollIntoView({ block: 'nearest' });
+
+  // ── Reference pages: inject hover permalink anchors into member headings ──
+  // Astro assigns the heading ids; we enhance them on the client (the same ids
+  // the TOC uses), so each reference row is deep-linkable. Gated to api pages.
+  const refArticle = document.querySelector<HTMLElement>('article[data-section$="API"]');
+  if (refArticle) {
+    refArticle.querySelectorAll<HTMLElement>('h2[id], h3[id], h4[id]').forEach((h) => {
+      if (h.querySelector('.heading-anchor')) return;
+      const a = document.createElement('a');
+      a.className = 'heading-anchor';
+      a.href = `#${h.id}`;
+      a.setAttribute('aria-label', `Permalink to ${h.id}`);
+      a.textContent = '#';
+      h.prepend(a);
+    });
+  }
 </script>

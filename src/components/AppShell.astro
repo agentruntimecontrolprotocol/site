@@ -1,0 +1,49 @@
+---
+// AppShell.astro — the docs application frame.
+//
+// At `wide:` (≥1280px) this is a height-locked `100dvh` grid: track 1 is the
+// full-height sidebar, track 2 is the right region (navbar pinned over the
+// scrolling content pane). The root clips its overflow, so the *window* never
+// scrolls — only the inner panes do. That is what keeps the navbar and sidebar
+// fixed for free (no `position:fixed`, no scroll-coupled JS) and what lets the
+// per-section code panels use `position:sticky` against the content pane later.
+//
+// Below `wide:` the grid collapses to a single column, the sidebar becomes an
+// off-canvas drawer (positioned by DocsSidebar itself), and the body scrolls
+// like a normal document.
+//
+// Slots: `sidebar` (grid track 1), `navbar` (top of the right region), and the
+// default slot (the scrolling content pane). Reused by DocsLayout and, later,
+// the Stripe-style start page.
+
+interface Props {
+  /** aria-label for the scrolling content region */
+  contentLabel?: string;
+}
+
+const { contentLabel = 'Documentation content' } = Astro.props;
+---
+
+<div
+  class="grid grid-cols-1 bg-bg text-ink
+         wide:grid-cols-[280px_minmax(0,1fr)] wide:grid-rows-1
+         wide:h-[100dvh] wide:overflow-hidden"
+>
+  <slot name="sidebar" />
+
+  <!-- right region: navbar (56px, no scroll) stacked over the content pane -->
+  <div class="flex min-w-0 min-h-0 flex-col">
+    <slot name="navbar" />
+
+    <main
+      id="content-pane"
+      class="content-scroll min-h-0 flex-1 overflow-x-hidden wide:overflow-y-auto
+             scroll-pt-4 [scrollbar-gutter:stable]"
+      tabindex="0"
+      role="region"
+      aria-label={contentLabel}
+    >
+      <slot />
+    </main>
+  </div>
+</div>

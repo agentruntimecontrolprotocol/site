@@ -1,0 +1,142 @@
+---
+// CodePanel.astro — the sticky `--code-bg` card (curated pages only). Header
+// (signature pill · LangTabs view toggle · copy/link actions) over the request
+// variants and an optional response. The panel tracks the theme via --code-bg;
+// it is NEVER a forced-dark surface.
+import LangTabs from './LangTabs.astro';
+
+interface Props {
+  /** mono pill: an SDK method signature or message name for this section */
+  signature?: string;
+  /** in-page anchor id this panel's section deep-links to */
+  anchor?: string;
+  /** code-lang ids carried by this panel (drives the LangTabs options) */
+  langs?: string[];
+  /** 'dropdown' (default, dense) | 'tabs' (landing/start page) */
+  tabs?: 'tabs' | 'dropdown';
+}
+
+const { signature, anchor, langs, tabs = 'dropdown' } = Astro.props;
+---
+
+<div class="CodePanel">
+  <div class="CodePanel-Header">
+    {
+      signature && (
+        <span class="chip signature min-w-0 truncate" title={signature}>
+          {signature}
+        </span>
+      )
+    }
+
+    <div class="ml-auto flex items-center gap-1.5">
+      <LangTabs variant={tabs} langs={langs} />
+
+      <button
+        type="button"
+        class="code-action"
+        data-copy-code
+        aria-label="Copy code"
+        title="Copy code"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+      </button>
+
+      {
+        anchor && (
+          <a class="code-action" href={`#${anchor}`} aria-label="Link to this section" title="Link to this section">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+          </a>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="CodePanel-Request" aria-live="polite">
+    <slot name="request" />
+  </div>
+
+  <slot name="response" />
+</div>
+
+<script>
+  // Global code-lang VIEW state (no navigation). Deduped across panels by Astro.
+  const LS_KEY = 'arcp:code-lang';
+  const KNOWN = new Set([
+    'spec', 'typescript', 'python', 'rust', 'go', 'java',
+    'kotlin', 'php', 'ruby', 'swift', 'csharp', 'fsharp',
+  ]);
+
+  function syncControls(id: string) {
+    document
+      .querySelectorAll<HTMLElement>('[data-langtabs]')
+      .forEach((el) => (el.dataset.value = id));
+    document
+      .querySelectorAll<HTMLSelectElement>('select[data-langtabs-select]')
+      .forEach((s) => (s.value = id));
+    document
+      .querySelectorAll<HTMLElement>('[data-set-lang]')
+      .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setLang === id)));
+  }
+
+  function setCodeLang(id: string) {
+    document.documentElement.dataset.codeLang = id; // CSS reveals; NO navigation
+    try {
+      localStorage.setItem(LS_KEY, id);
+    } catch {}
+    syncControls(id);
+  }
+
+  // Seed the view from /<lang>/… ONLY when the reader has no stored preference.
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(LS_KEY);
+  } catch {}
+  if (!stored) {
+    // Seed the view from /<lang>/… ONLY when that segment is a real code lang —
+    // otherwise keep the SSR `spec` default (e.g. on /code-probe).
+    const seg = location.pathname.split('/')[1];
+    if (seg && KNOWN.has(seg)) document.documentElement.dataset.codeLang = seg;
+  }
+
+  // Fall back when the chosen language isn't rendered on this page (a curated
+  // page may carry only a subset of the 12) — prefer `spec`, else the first.
+  const chosen = document.documentElement.dataset.codeLang || 'spec';
+  if (!document.querySelector(`.code-variant[data-lang="${CSS.escape(chosen)}"]`)) {
+    const fallback = document.querySelector('.code-variant[data-lang="spec"]')
+      ? 'spec'
+      : document.querySelector('.code-variant')?.getAttribute('data-lang') || 'spec';
+    document.documentElement.dataset.codeLang = fallback;
+  }
+  syncControls(document.documentElement.dataset.codeLang || 'spec');
+
+  // One delegated listener for every panel's controls.
+  document.addEventListener('click', (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-set-lang]');
+    if (t?.dataset.setLang) setCodeLang(t.dataset.setLang);
+  });
+  document.addEventListener('change', (e) => {
+    const s = (e.target as HTMLElement).closest<HTMLSelectElement>('select[data-langtabs-select]');
+    if (s) setCodeLang(s.value);
+  });
+
+  // Copy the currently-visible variant of the clicked panel.
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-copy-code]');
+    if (!btn) return;
+    const panel = btn.closest('.CodePanel');
+    const lang = document.documentElement.dataset.codeLang || 'spec';
+    const variant = panel?.querySelector<HTMLElement>(`.code-variant[data-lang="${lang}"]`);
+    const code = variant?.innerText ?? '';
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      btn.setAttribute('aria-label', 'Copied');
+      btn.classList.add('is-copied');
+      setTimeout(() => {
+        btn.setAttribute('aria-label', 'Copy code');
+        btn.classList.remove('is-copied');
+      }, 1200);
+    } catch {}
+  });
+</script>

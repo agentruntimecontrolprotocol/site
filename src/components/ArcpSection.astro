@@ -1,0 +1,37 @@
+---
+// ArcpSection.astro — the per-section two-column grid (Stripe's ApiSectionGrid):
+// prose left, a sticky code/callout panel right. One block per object / method /
+// concept. Collapses to a single column below `wide:` and when there is no aside.
+//
+// DOM order is prose-then-aside (no CSS `order`), so reading order matches source
+// order for screen readers. The aside is `sticky top-4` at `wide:` only — it
+// resolves against the scrolling content pane (see AppShell), so each section's
+// panel sticks while you read it, then the next takes over.
+interface Props {
+  /** slugged id for deep-linking / sidebar TOC anchors */
+  id?: string;
+}
+
+const { id } = Astro.props;
+const hasAside = Astro.slots.has('aside');
+---
+
+<section
+  id={id}
+  class:list={[
+    'ArcpSection scroll-mt-4',
+    hasAside && 'wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] wide:gap-10 wide:items-start',
+  ]}
+>
+  <div class="min-w-0">
+    <slot />
+  </div>
+
+  {
+    hasAside && (
+      <div class="ArcpSection-Aside mt-4 wide:mt-0 wide:sticky wide:top-4 wide:self-start wide:max-h-[calc(100dvh-3rem)]">
+        <slot name="aside" />
+      </div>
+    )
+  }
+</section>

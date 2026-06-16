@@ -1,13 +1,14 @@
 ---
-import { LANG_ITEMS, type NavItem } from '../lib/docs-nav';
+import { SITE } from '../consts';
+import { LANG_ITEMS, type NavSection } from '../lib/docs-nav';
 
 interface Props {
-  langNav: NavItem[];
+  navSections: NavSection[];
   currentLang: string;
   path: string;
 }
 
-const { langNav, currentLang, path } = Astro.props;
+const { navSections, currentLang, path } = Astro.props;
 
 function isActive(p: string, exact = false) {
   return exact ? path === p : path === p || path.startsWith(p + '/');
@@ -30,54 +31,111 @@ const childLinkClass = (p: string) =>
 
 <aside
   id="docs-nav"
-  class="fixed lg:sticky top-14 left-0 z-30 w-72 shrink-0 h-[calc(100dvh-3.5rem)] lg:h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-line bg-bg transition-transform duration-200 -translate-x-full lg:translate-x-0"
+  class="fixed inset-y-0 left-0 z-40 w-70 -translate-x-full transition-transform duration-200
+         flex h-[100dvh] flex-col overflow-hidden border-r border-line bg-bg
+         wide:static wide:z-auto wide:h-auto wide:translate-x-0"
 >
-  <div class="px-4 py-4 border-b border-line">
-    <p class="mb-2 text-xs uppercase tracking-wider text-muted">Language</p>
-
-    <div class="hidden lg:flex flex-wrap gap-1.5">
-      {
-        LANG_ITEMS.map((item) => (
-          <a
-            href={`/${item.value}`}
-            rel="nofollow noreferrer"
-            class:list={['lang-chip', { 'is-active': currentLang === item.value }]}
-          >
-            {item.label}
-          </a>
-        ))
-      }
+  <!-- FIXED TOP ZONE — brand · search · language. Does not scroll (Stripe ~91px). -->
+  <div class="shrink-0">
+    <!-- brand row aligns with the navbar height (h-14) on the right -->
+    <div class="flex h-14 items-center gap-3 border-b border-line px-4">
+      <a
+        href="/"
+        class="inline-flex items-center font-mono text-[1.02rem] font-semibold tracking-[0.04em] text-ink no-underline"
+      >
+        {SITE.name}<span class="arcp-caret"></span>
+      </a>
     </div>
 
-    <select
-      id="lang-select"
-      class="w-full lg:hidden rounded border border-line bg-paper px-2 py-1.5 font-mono text-small text-ink"
-      aria-label="Select language"
-    >
-      {
-        LANG_ITEMS.map((item) => (
-          <option value={item.value} selected={currentLang === item.value}>
-            {item.label}
-          </option>
-        ))
-      }
-    </select>
+    <!-- search trigger — layout placeholder; backend (Pagefind) is deferred, so
+         it ships disabled with a "soon" affordance rather than a dead control. -->
+    <div class="px-3 pt-3">
+      <button
+        id="docs-search-trigger"
+        type="button"
+        disabled
+        title="Search is coming soon"
+        class="flex w-full items-center gap-2 rounded border border-line bg-paper px-3 py-2 text-small text-muted opacity-70 cursor-not-allowed"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+        <span class="flex-1 text-left">Find anything</span>
+        <span class="rounded border border-line px-1.5 py-0.5 font-mono text-mini text-faint">soon</span>
+      </button>
+    </div>
+
+    <!-- language switcher — NAVIGATION: picking a language re-routes /<lang>. -->
+    <div class="px-4 py-3 border-b border-line">
+      <p class="mb-2 label">Language</p>
+
+      <div class="hidden wide:flex flex-wrap gap-1.5">
+        {
+          LANG_ITEMS.map((item) => (
+            <a
+              href={`/${item.value}`}
+              rel="nofollow noreferrer"
+              class:list={['lang-chip', { 'is-active': currentLang === item.value }]}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </div>
+
+      <select
+        id="lang-select"
+        class="w-full wide:hidden rounded border border-line bg-paper px-2 py-1.5 font-mono text-small text-ink"
+        aria-label="Select language"
+      >
+        {
+          LANG_ITEMS.map((item) => (
+            <option value={item.value} selected={currentLang === item.value}>
+              {item.label}
+            </option>
+          ))
+        }
+      </select>
+    </div>
   </div>
 
-  <nav id="docs-nav-tree" class="px-3 py-4">
-    <ul class="space-y-0.5">
-      {
-        langNav.map((item) => (
+  <!-- NAV TREE — the only part of the sidebar that scrolls. -->
+  <nav
+    id="docs-nav-tree"
+    class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"
+    tabindex="0"
+    role="region"
+    aria-label="Navigation"
+  >
+    {
+      navSections.map((section) => (
+        <div class="mb-4">
+          {section.kind === 'group' && (
+            <p class="label px-3 mb-1.5">{section.label}</p>
+          )}
+          <ul class="space-y-0.5">
+            {section.items.map((item) => (
           <li>
             <div class="flex items-center gap-0.5">
-              <a
-                href={item.path}
-                class={parentLinkClass(item.path)}
-                data-active={isActive(item.path) ? 'true' : undefined}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-              >
-                {item.title}
-              </a>
+              {item.hasPage === false && item.children?.length ? (
+                // synthetic parent (folder w/o index): toggle, don't navigate
+                <button
+                  type="button"
+                  class:list={[parentLinkClass(item.path), 'nav-toggle text-left']}
+                  data-target={item.path}
+                  data-active={isActive(item.path) ? 'true' : undefined}
+                  aria-expanded={isOpen(item.path) ? 'true' : 'false'}
+                >
+                  {item.title}
+                </button>
+              ) : (
+                <a
+                  href={item.path}
+                  class={parentLinkClass(item.path)}
+                  data-active={isActive(item.path) ? 'true' : undefined}
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                >
+                  {item.title}
+                </a>
+              )}
               {item.children?.length ? (
                 <button
                   type="button"
@@ -126,8 +184,10 @@ const childLinkClass = (p: string) =>
               </ul>
             ) : null}
           </li>
-        ))
-      }
-    </ul>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
   </nav>
 </aside>

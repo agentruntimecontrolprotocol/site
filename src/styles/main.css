@@ -70,6 +70,12 @@
   /* radius */
   --radius-chip: 0.25rem;
 
+  /* breakpoint — the docs app-shell flips to its 100dvh three-region layout at
+     `wide:` (1280px). 80rem coincides with Tailwind's default `xl` and the
+     AppHeader `max-w-[80rem]`; kept as a separate, semantically-named token so
+     edits to one don't desync the other. Tailwind v4 emits a `wide:` variant. */
+  --breakpoint-wide: 80rem;
+
   /* motion */
   --animate-blink: blink 1.15s steps(1) infinite;
   --animate-rise:  rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -314,7 +320,8 @@
            font-mono text-small text-ink-soft no-underline transition-colors;
   }
   .lang-chip:hover { @apply border-accent text-accent; }
-  .lang-chip.is-active {
+  .lang-chip.is-active,
+  .lang-chip[aria-pressed="true"] {
     @apply border-accent bg-paper text-accent font-medium;
   }
 
@@ -379,6 +386,22 @@
 .dark .diagram-light { display: none; }
 .dark .diagram-dark { display: revert; }
 
+/* ----------------------------------------------------------------------------
+   Docs app shell — structural helpers for the Stripe-reference-style reading
+   shell (see docs/docs-presentation.md). No new color: grid/overflow/scroll
+   declarations only.
+   ---------------------------------------------------------------------------- */
+
+/* Smooth in-pane scrolling for deep-link/TOC jumps; the global reduced-motion
+   block already kills `html` scroll-behavior, mirror that for the pane. */
+.content-scroll { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  .content-scroll { scroll-behavior: auto; }
+}
+
+/* Scroll-lock the page while the mobile nav drawer is open (below `wide:`). */
+.drawer-open { overflow: hidden; }
+
 .prose thead:not(:has(th:not(:empty))) {
   display: none;
 }
@@ -392,4 +415,157 @@
 }
 .prose tbody tr:hover {
   background-color: color-mix(in srgb, var(--paper) 55%, transparent);
+}
+
+/* ----------------------------------------------------------------------------
+   Reference pages (generated `/<lang>/api/**`) — style the heading skeleton into
+   a clean, Stripe-ish reference list. Scoped via the article's existing
+   `data-section$="API"` (set by sectionLabel) and targeting headings DIRECTLY,
+   so it's pure-CSS / SSR and generator-agnostic (the SDKs' doc generators emit
+   different markdown, but all use the same heading structure). The hover
+   permalink anchors are injected client-side by DocsLayout. No new color.
+   ---------------------------------------------------------------------------- */
+[data-section$="API"] :is(h2, h3, h4) {
+  position: relative;
+}
+[data-section$="API"] .heading-anchor {
+  position: absolute;
+  left: -1.15rem;
+  opacity: 0;
+  font-weight: 400;
+  text-decoration: none;
+  color: var(--faint);
+  transition: opacity 0.12s ease, color 0.12s ease;
+}
+[data-section$="API"] :is(h2, h3, h4):hover .heading-anchor,
+[data-section$="API"] .heading-anchor:focus-visible {
+  opacity: 1;
+}
+[data-section$="API"] .heading-anchor:hover {
+  color: var(--accent);
+}
+
+/* member headings (h3/h4) → mono reference rows with a hairline divider */
+[data-section$="API"] :is(h3, h4) {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  margin-top: 1.1rem;
+  padding-top: 0.95rem;
+}
+[data-section$="API"] h4 {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+/* object/class headings (h2) → keep prominent; mono signal, accent rule */
+[data-section$="API"] h2 {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+  border-top: 2px solid var(--accent);
+  margin-top: 2.4rem;
+  padding-top: 0.9rem;
+}
+
+/* dividers the generators emit between members → quiet hairline */
+[data-section$="API"] hr {
+  border-color: var(--line);
+}
+
+/* ----------------------------------------------------------------------------
+   Code panel (CodePanel) — the sticky right-column panel on curated pages.
+   UNLAYERED so it wins over Shiki defaults, and scoped under `.CodePanel` so
+   the prose `.prose pre` rule keeps governing the left column. Reuses --code-bg
+   (light paper in light, ink in dark) — NO new color, never a forced-dark panel.
+   ---------------------------------------------------------------------------- */
+.CodePanel {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.CodePanel-Header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+.CodePanel-Request {
+  max-height: 480px;
+  overflow: auto;
+}
+.CodePanel-Response {
+  border-top: 1px solid var(--line);
+}
+.CodePanel-Response-label {
+  margin: 0;
+  padding: 0.55rem 0.95rem 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-mini);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--faint);
+}
+/* the panel owns the surface — strip Shiki's per-block bg in both themes */
+.CodePanel :is(pre.astro-code, .shiki),
+html.dark .CodePanel :is(pre.astro-code, .shiki) {
+  background: transparent !important;
+}
+/* smaller, consistent mono sizing inside panels (matches the home .code-window) */
+.CodePanel :is(pre, code) {
+  font-size: var(--text-code);
+}
+.CodePanel pre {
+  margin: 0;
+  line-height: 1.7;
+}
+/* request/response code gets comfortable panel padding */
+.CodePanel :is(.CodePanel-Request, .CodePanel-Response) pre {
+  border: 0;
+  border-radius: 0;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+}
+
+/* round 28px action buttons in the panel header */
+.code-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  color: var(--muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.code-action:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+}
+.code-action.is-copied {
+  color: var(--accent);
+}
+
+/* language VIEW toggle — reveal exactly one variant per the <html> attribute.
+   One rule per CODE_LANGS id (11 SDKs + spec). */
+.code-variant {
+  display: none;
+}
+:root[data-code-lang="spec"] .code-variant[data-lang="spec"],
+:root[data-code-lang="typescript"] .code-variant[data-lang="typescript"],
+:root[data-code-lang="python"] .code-variant[data-lang="python"],
+:root[data-code-lang="rust"] .code-variant[data-lang="rust"],
+:root[data-code-lang="go"] .code-variant[data-lang="go"],
+:root[data-code-lang="java"] .code-variant[data-lang="java"],
+:root[data-code-lang="kotlin"] .code-variant[data-lang="kotlin"],
+:root[data-code-lang="php"] .code-variant[data-lang="php"],
+:root[data-code-lang="ruby"] .code-variant[data-lang="ruby"],
+:root[data-code-lang="swift"] .code-variant[data-lang="swift"],
+:root[data-code-lang="csharp"] .code-variant[data-lang="csharp"],
+:root[data-code-lang="fsharp"] .code-variant[data-lang="fsharp"] {
+  display: block;
 }

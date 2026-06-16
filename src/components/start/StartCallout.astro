@@ -1,0 +1,21 @@
+---
+// StartCallout.astro — an Inkwell `.envelope` callout for the start-page rail
+// (the ARCP analog of Stripe's "Just getting started?" / "Not a developer?").
+interface Props {
+  tag: string;
+  href: string;
+  linkLabel: string;
+}
+
+const { tag, href, linkLabel } = Astro.props;
+---
+
+<div class="envelope">
+  <span class="envelope__tag">{tag}</span>
+  <div class="text-small text-ink-soft">
+    <slot />
+  </div>
+  <a href={href} class="btn-arrow mt-3 text-small">
+    {linkLabel} <span class="text-accent">→</span>
+  </a>
+</div>

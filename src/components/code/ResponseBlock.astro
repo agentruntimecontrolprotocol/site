@@ -1,0 +1,22 @@
+---
+// ResponseBlock.astro — the optional "RESPONSE" area under the request. The
+// wire payload is language-independent, so it lives OUTSIDE the per-language
+// switch (one shared json block, never duplicated). For a streaming section
+// this is an `Event` frame (with `seq`), NOT a list-pagination envelope.
+import { Code } from 'astro:components';
+import { arcpLight, arcpDark } from '../../../shiki-arcp.mjs';
+
+interface Props {
+  /** JSON payload to show; rendered as a single shared json block */
+  json: string;
+  /** label override (e.g. "EVENT" for a streaming frame) */
+  label?: string;
+}
+
+const { json, label = 'Response' } = Astro.props;
+---
+
+<div class="CodePanel-Response">
+  <p class="CodePanel-Response-label">{label}</p>
+  <Code code={json.trimEnd()} lang="json" themes={{ light: arcpLight, dark: arcpDark }} />
+</div>

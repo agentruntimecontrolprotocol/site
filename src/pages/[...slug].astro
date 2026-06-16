@@ -3,10 +3,12 @@ import { render } from 'astro:content';
 import DocsLayout from '../layouts/DocsLayout.astro';
 import DocsBreadcrumb from '../components/DocsBreadcrumb.astro';
 import DocsToc from '../components/DocsToc.astro';
+import PageActions from '../components/PageActions.astro';
 import {
   getDocsEntries,
   buildNavTree,
   langNavFor,
+  groupLangNav,
   currentLangFor,
   sectionLabel,
   buildToc,
@@ -16,19 +18,19 @@ import {
 export async function getStaticPaths() {
   const entries = await getDocsEntries();
   const tree = buildNavTree(entries);
-  // Cache the per-language nav slice so we don't re-dedupe for every page.
-  const navByLang = new Map<string, ReturnType<typeof langNavFor>>();
+  // Cache the grouped per-language nav so we don't re-dedupe/re-bucket per page.
+  const navByLang = new Map<string, ReturnType<typeof groupLangNav>>();
 
   return entries.flatMap((entry) => {
     const path = entryToPath(entry.id);
     if (path === '/') return []; // home is Step 6, not this route
     const lang = currentLangFor(path);
-    if (!navByLang.has(lang)) navByLang.set(lang, langNavFor(tree, lang));
-    return [{ params: { slug: path.slice(1) }, props: { entry, path, lang, langNav: navByLang.get(lang)! } }];
+    if (!navByLang.has(lang)) navByLang.set(lang, groupLangNav(langNavFor(tree, lang), lang));
+    return [{ params: { slug: path.slice(1) }, props: { entry, path, lang, navSections: navByLang.get(lang)! } }];
   });
 }
 
-const { entry, path, lang, langNav } = Astro.props;
+const { entry, path, lang, navSections } = Astro.props;
 const { Content, headings } = await render(entry);
 
 const toc = buildToc(headings);
@@ -37,9 +39,12 @@ const title = entry.data.title ?? headings.find((h) => h.depth === 1)?.text ?? '
 const section = sectionLabel(path);
 ---
 
-<DocsLayout path={path} langNav={langNav} currentLang={lang} title={title}>
-  <div class="max-w-3xl xl:flex xl:max-w-[64rem] xl:gap-12">
+<DocsLayout path={path} navSections={navSections} currentLang={lang} title={title}>
+  <div class="mx-auto max-w-3xl px-5 py-8 sm:px-8 xl:flex xl:max-w-[64rem] xl:gap-12 wide:px-12 wide:py-10">
     <div class="min-w-0 max-w-3xl xl:flex-1">
+      <div class="mb-4 flex justify-end">
+        <PageActions path={path} />
+      </div>
       <DocsBreadcrumb path={path} />
       <article class="prose" data-section={section}>
         <Content />

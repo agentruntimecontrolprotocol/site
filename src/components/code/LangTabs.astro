@@ -1,0 +1,47 @@
+---
+// LangTabs.astro — the code-panel VIEW toggle (never navigation). Writes the
+// global `data-code-lang` (handled by CodePanel's delegated script). Two
+// presentations sharing one state:
+//   variant="dropdown" — a native <select> (works with no JS; default in panels)
+//   variant="tabs"     — a chip row reusing .lang-chip (landing/start page)
+// Only the languages present in this panel are offered.
+import { CODE_LANGS, DEFAULT_LANG } from '../../lib/code-langs';
+
+interface Props {
+  variant?: 'tabs' | 'dropdown';
+  /** code-lang ids carried by this panel; defaults to all 12 */
+  langs?: string[];
+}
+
+const { variant = 'dropdown', langs } = Astro.props;
+const items = langs ? CODE_LANGS.filter((l) => langs.includes(l.id)) : CODE_LANGS;
+---
+
+{
+  variant === 'tabs' ? (
+    <div data-langtabs data-value={DEFAULT_LANG} class="flex flex-wrap items-center gap-1">
+      {items.map((l) => (
+        <button
+          type="button"
+          class="lang-chip"
+          data-set-lang={l.id}
+          aria-pressed={l.id === DEFAULT_LANG ? 'true' : 'false'}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  ) : (
+    <select
+      data-langtabs-select
+      aria-label="Code language"
+      class="rounded border border-line bg-code-bg px-2 py-1 font-mono text-mini text-ink-soft"
+    >
+      {items.map((l) => (
+        <option value={l.id} selected={l.id === DEFAULT_LANG}>
+          {l.label}
+        </option>
+      ))}
+    </select>
+  )
+}

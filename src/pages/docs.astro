@@ -1,0 +1,76 @@
+---
+// /docs — the Stripe-/api-style start page: a language-neutral ARCP overview as
+// a vertical stack of two-column concept sections (prose left, per-language code
+// panel right) fronted by the "start kit" rail. Reuses DocsLayout (AppShell +
+// sidebar + navbar) and the ArcpSection / CodePanel primitives.
+import DocsLayout from '../layouts/DocsLayout.astro';
+import ArcpSection from '../components/ArcpSection.astro';
+import CodePanel from '../components/code/CodePanel.astro';
+import CodeVariant from '../components/code/CodeVariant.astro';
+import ResponseBlock from '../components/code/ResponseBlock.astro';
+import StartRightRail from '../components/start/StartRightRail.astro';
+import { CONCEPTS, START_LANGS } from '../lib/start-content';
+import type { NavSection } from '../lib/docs-nav';
+
+const path = '/docs';
+const langs = [...START_LANGS];
+
+// The sidebar leads with a "Start" group whose children are the concept anchors
+// on this page — so the sidebar doubles as the page TOC (Stripe's left nav).
+const navSections: NavSection[] = [
+  {
+    kind: 'group',
+    id: 'start',
+    label: 'Start',
+    items: [
+      { path: '/docs#overview', title: 'Overview' },
+      ...CONCEPTS.map((c) => ({ path: `/docs#${c.id}`, title: c.heading })),
+    ],
+  },
+];
+---
+
+<DocsLayout path={path} navSections={navSections} currentLang="spec" title="Docs">
+  <div class="mx-auto max-w-[80rem] px-5 py-8 sm:px-8 wide:px-12 wide:py-10">
+    <!-- hero / overview — start kit rides the right column -->
+    <ArcpSection id="overview">
+      <p class="eyebrow mb-3">Agent Runtime Control Protocol</p>
+      <h1 class="mb-4 font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.08] tracking-display">
+        Build on ARCP
+      </h1>
+      <p class="mb-4 text-[1.12rem] leading-relaxed text-ink-soft">
+        ARCP is a transport-agnostic wire protocol for submitting, observing, and
+        controlling long-running AI agent jobs. Pick a language in any code panel —
+        every example on this page switches with it.
+      </p>
+      <p class="text-ink-soft">
+        The sections below walk the protocol end to end: connect and handshake,
+        submit a job, stream its events, steer it mid-flight, handle errors, and
+        negotiate a version.
+      </p>
+
+      <StartRightRail slot="aside" />
+    </ArcpSection>
+
+    {
+      CONCEPTS.map((c) => (
+        <>
+          <hr class="rule my-12" />
+          <ArcpSection id={c.id}>
+            <h2 class="mb-3 font-serif text-[1.6rem] leading-tight">{c.heading}</h2>
+            <div class="mb-4 leading-relaxed text-ink-soft" set:html={c.body} />
+
+            <CodePanel slot="aside" signature={c.signature} anchor={c.id} langs={langs}>
+              <Fragment slot="request">
+                {Object.entries(c.code).map(([l, code]) => (
+                  <CodeVariant lang={l} code={code} />
+                ))}
+              </Fragment>
+              {c.response && <ResponseBlock slot="response" json={c.response} label={c.responseLabel} />}
+            </CodePanel>
+          </ArcpSection>
+        </>
+      ))
+    }
+  </div>
+</DocsLayout>

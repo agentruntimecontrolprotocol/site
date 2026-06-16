@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { CONCEPTS, GROUPS } from './nav-groups';
 
 // Language route keys. SDKS render an API reference + guides; `spec` is the
 // specification. Order drives the language-chip row.
@@ -45,7 +46,18 @@ export const API_ROOT_LABELS: Record<string, string> = {
   spec: 'Specification',
 };
 
-export type NavItem = { path: string; title?: string; children?: NavItem[] };
+export type NavItem = {
+  path: string;
+  title?: string;
+  children?: NavItem[];
+  /**
+   * Whether `path` corresponds to a real docs entry. `false` for synthetic
+   * parent nodes that exist only to hold children (e.g. a `guides/` folder with
+   * no `index.md`) — the sidebar renders those as non-link expanders so clicking
+   * them toggles instead of navigating to a 404.
+   */
+  hasPage?: boolean;
+};
 
 /** Map a `docs` collection entry id to its URL path (no trailing slash). */
 export function entryToPath(id: string): string {
@@ -135,7 +147,13 @@ export function buildNavTree(entries: CollectionEntry<'docs'>[]): NavItem[] {
   function ensure(path: string): NavItem {
     let node = nodeByPath.get(path);
     if (node) return node;
-    node = { path, title: titleByPath.get(path) ?? titleize(lastSegment(path)) };
+    // `hasPage` distinguishes real entries from synthetic parents created only
+    // to nest children (folders without an index page).
+    node = {
+      path,
+      title: titleByPath.get(path) ?? titleize(lastSegment(path)),
+      hasPage: titleByPath.has(path),
+    };
     nodeByPath.set(path, node);
     const parent = parentPath(path);
     if (parent) {
@@ -155,6 +173,67 @@ export function buildNavTree(entries: CollectionEntry<'docs'>[]): NavItem[] {
 export function langNavFor(tree: NavItem[], lang: string): NavItem[] {
   const root = tree.find((n) => n.path === `/${lang}`);
   return dedupe(root?.children, root?.path, lang);
+}
+
+/**
+ * A grouped slice of the per-language nav: either the top ungrouped concept
+ * list or a labelled domain/reference group. Drives the two-tier sidebar IA.
+ */
+export type NavSection =
+  | { kind: 'concepts'; items: NavItem[] }
+  | { kind: 'group'; id: string; label: string; items: NavItem[] };
+
+/**
+ * Re-bucket an already-deduped `langNavFor()` slice into the Stripe-style
+ * two-tier IA: curated concepts on top, then domain groups, then the generated
+ * reference under a trailing "API reference"/"Specification" group.
+ *
+ * Runs AFTER `dedupe` — it only re-buckets clean `NavItem[]`, never re-parses
+ * files. Manifest members are matched by leaf slug; unmatched members are
+ * dropped (no fabricated rows). If nothing matches (e.g. the `spec` slice),
+ * the original flat list is returned unheadered so no lonely group appears.
+ */
+export function groupLangNav(items: NavItem[], lang: string): NavSection[] {
+  const byLeaf = new Map(items.map((n) => [lastSegment(n.path), n]));
+  const claimed = new Set<string>();
+
+  const concepts = (CONCEPTS[lang] ?? CONCEPTS._default ?? [])
+    .map((c) => {
+      const n = byLeaf.get(c.path);
+      if (!n) return undefined;
+      claimed.add(n.path);
+      return { ...n, title: c.title ?? n.title };
+    })
+    .filter((n): n is NavItem => Boolean(n));
+
+  const groups = (GROUPS[lang] ?? GROUPS._default ?? [])
+    .map((g) => ({
+      kind: 'group' as const,
+      id: g.id,
+      label: g.label,
+      items: g.members
+        .map((m) => byLeaf.get(m))
+        .filter((n): n is NavItem => Boolean(n))
+        .map((n) => {
+          claimed.add(n.path);
+          return n;
+        }),
+    }))
+    .filter((g) => g.items.length);
+
+  const rest = items.filter((n) => !claimed.has(n.path));
+
+  // Nothing curated for this language → keep the flat list, no headers.
+  if (!concepts.length && !groups.length) {
+    return rest.length ? [{ kind: 'concepts', items: rest }] : [];
+  }
+
+  const restLabel = lang === 'spec' ? 'Specification' : 'API reference';
+  return [
+    ...(concepts.length ? [{ kind: 'concepts' as const, items: concepts }] : []),
+    ...groups,
+    ...(rest.length ? [{ kind: 'group' as const, id: 'api', label: restLabel, items: rest }] : []),
+  ];
 }
 
 /** Resolve the active language from a path's first segment (falls back to spec). */

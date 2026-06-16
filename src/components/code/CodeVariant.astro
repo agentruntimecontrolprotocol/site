@@ -1,0 +1,22 @@
+---
+// CodeVariant.astro — one Shiki-highlighted code block tagged with `data-lang`.
+// All variants render at build time; CSS reveals exactly one per the global
+// `data-code-lang` on <html> (see main.css). Uses the same dual arcp themes as
+// the markdown pipeline, so `src/styles/shiki.css` handles the .dark swap.
+import { Code } from 'astro:components';
+import { arcpLight, arcpDark } from '../../../shiki-arcp.mjs';
+import { CODE_LANGS } from '../../lib/code-langs';
+
+interface Props {
+  /** code-lang id (e.g. 'python', 'spec') — drives reveal + grammar */
+  lang: string;
+  code: string;
+}
+
+const { lang, code } = Astro.props;
+const grammar = CODE_LANGS.find((l) => l.id === lang)?.shiki ?? 'text';
+---
+
+<div class="code-variant" data-lang={lang}>
+  <Code code={code.trimEnd()} lang={grammar} themes={{ light: arcpLight, dark: arcpDark }} />
+</div>
